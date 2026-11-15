@@ -352,7 +352,10 @@ export interface AttendanceChallengeResponse {
 /** GET /api/users/me/profile (shape theo CanonicalProfileEndpoints.Response) */
 export interface SelfProfileResponse {
   userId: number;
+  /** GUID string — gửi lại làm `expectedVersion` khi PATCH (409 STALE_PROFILE khi lệch). */
   version: string;
+  profileSource: string;
+  identityProvenance: string;
   profile: {
     displayName: string;
     about: string;
@@ -364,10 +367,22 @@ export interface SelfProfileResponse {
   };
   personal: {
     phoneNumber: string | null;
+    /** "yyyy-MM-dd" | null (chỉ có khi account đã onboarding) */
+    dateOfBirth?: string | null;
+    address?: string | null;
   };
   academic: {
     major: string | null;
+    /** "NO_AUTHORITATIVE_SOURCE" | "SELF_DECLARED" */
     majorAvailability: string;
+  };
+  /** Ví dụ "profile.displayName", "academic.major" — field nào được phép sửa. */
+  editableFields: string[];
+  /** Chỉ có khi account đã onboarding (includePrivate). */
+  onboarding?: {
+    version: number;
+    syncTimetable: boolean;
+    completedAt: string | null;
   };
 }
 
@@ -599,4 +614,164 @@ export interface Notification {
   message: string;
   isRead: boolean;
   createdAtUtc: string;
+}
+
+// ============================ CONTRIBUTIONS (Phase 5 — tab minh chứng) ============================
+
+// Tái dùng `Contribution` + `ContributionAttributes` (đã có sẵn ở trên) cho
+// item chuẩn. Chỉ khai báo thêm item LEGACY + wrapper trang (union 2 loại item,
+// vì backend `StudentContributionReadService` UNION canonical + SelfDeclarations).
+
+/**
+ * Kê khai cá nhân cũ (SelfDeclarations) — backend UNION chung với contribution
+ * chuẩn trong StudentContributionReadService.PageAsync (row.Legacy).
+ * Khác `Contribution`: không có `clubId`, điểm ở `legacyRawPointsPreview` (nullable).
+ */
+export interface LegacyContributionItem {
+  id: string;
+  userId: number;
+  sourceType: string;
+  sourceNamespace: string;
+  sourceKey: string;
+  sourceId: string | null;
+  semesterId: string | null;
+  occurredAt: string;
+  title: string;
+  status: string;
+  isAuthoritative: boolean;
+  legacyRawPointsPreview: number | null;
+  calculationBreakdown?: unknown | null;
+  verifiedAttributes?: unknown | null;
+  evidenceRefs: string[];
+}
+
+/**
+ * GET /api/users/me/contributions?semesterId&status&pillar&page&pageSize
+ * Sắp giảm theo CreatedAtUtc; `items` là union Contribution | LegacyContributionItem.
+ * (Không dùng `Paged<T>` có sẵn vì backend trả thêm `totalItems` + items là union.)
+ */
+export interface StudentContributionPage {
+  items: (Contribution | LegacyContributionItem)[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalItems: number;
+  totalPages: number;
+  legacySemesterAssignment?: string;
+}
+
+
+// ============================ CLUB REWARDS & COSMETICS (Phase 6) ============================
+//
+// Backend (AdminService/Endpoints/ClubCreditEndpoints.cs):
+//   GET  /api/clubs/{clubId}/wallet/me       → ClubCreditWallet
+//   GET  /api/clubs/{clubId}/rewards         → ClubRewardCatalogPage (chỉ PUBLISHED với user thường)
+//   POST /api/clubs/{clubId}/rewards/{id}/redeem (Idempotency-Key bắt buộc;
+//        body { expectedRewardVersion, expectedWalletVersion }; 409 STALE_WALLET /
+//        REWARD_NOT_OPEN_OR_STALE / INSUFFICIENT_CREDIT → refetch)
+//   GET  /api/users/me/cosmetics             → CosmeticInventoryPage (mục đã sở hữu)
+
+/** Định nghĩa cosmetic do CLB cấp (ClubCosmeticDefinition). */
+export interface CosmeticDefinitionDto {
+  cosmeticId: string;
+  issuerClubId: number;
+  /** COLOR | SHAPE | FRAME | BUNDLE */
+  kind: string;
+  label: string;
+  /**
+   * COLOR → { background, secondary, accent, ink } (4 HEX);
+   * SHAPE/FRAME → { assetUrl } (ảnh R2 do CLB upload).
+   */
+  definition: Record<string, unknown> | null;
+}
+
+/** Quà trong catalog CLB (ClubReward + grants + availability phái sinh). */
+export interface ClubRewardItem {
+  id: string;
+  clubId: number;
+  label: string;
+  description: string;
+  /** COLOR | SHAPE | FRAME | BUNDLE */
+  kind: string;
+  /** Giá tính bằng CLUB_CREDIT (= XP verified của CLB, 1-1). */
+  price: number;
+  /** PUBLISHED | DRAFT | RETIRED (user thường chỉ thấy PUBLISHED). */
+  status: string;
+  /** GUID — CAS khi redeem (expectedRewardVersion). */
+  version: string;
+  opensAt: string;
+  closesAt: string | null;
+  /** OPEN | SCHEDULED | EXPIRED (phái sinh từ status + cửa sổ thời gian). */
+  availability: string;
+  grants: CosmeticDefinitionDto[];
+  /** "FULL_BUNDLE_PRICE_FOR_MISSING_GRANTS" */
+  partialOwnershipPolicy: string;
+  timezone: string;
+}
+
+export interface ClubRewardCatalogPage {
+  clubId: number;
+  asOf: string;
+  capabilities: {
+    canManage: boolean;
+    canRedeem: boolean;
+  };
+  items: ClubRewardItem[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+/** Số dư credit CLB của user (CLUB_CREDIT, scope LIFETIME). */
+export interface ClubCreditWallet {
+  clubId: number;
+  userId: number;
+  unit: string;
+  scope: string;
+  policyVersion: string;
+  earnedTotal: number;
+  revokedTotal: number;
+  spentTotal: number;
+  /** Số credit khả dụng (có thể âm = nợ điểm). */
+  balance: number;
+  /** GUID — CAS khi redeem (expectedWalletVersion). */
+  version: string;
+  sourceRevision: string;
+  hasDebt: boolean;
+  /** "VERIFIED_CLUB_XP_1_TO_1" */
+  conversion: string;
+  experiencePointsAreNotSpent: boolean;
+}
+
+/** Biên lai redeem (ClubRewardRedemption) — trả về cả khi replay (idempotent). */
+export interface ClubRewardRedemption {
+  receiptId: string;
+  userId: number;
+  clubId: number;
+  rewardId: string;
+  rewardLabel: string;
+  amount: number;
+  /** cosmeticId đã cấp (bỏ trùng — chỉ grant CHƯA có). */
+  grants: string[];
+  balance: number;
+  walletVersion: string;
+  sourceRevision: string;
+  policyVersion: string;
+  createdAt: string;
+  unit: string;
+}
+
+/** Kho cosmetic user đang sở hữu (mọi CLB). */
+export interface CosmeticInventoryPage {
+  userId: number;
+  items: {
+    cosmetic: CosmeticDefinitionDto;
+    sourceReceiptId: string;
+    acquiredAt: string;
+  }[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
 }

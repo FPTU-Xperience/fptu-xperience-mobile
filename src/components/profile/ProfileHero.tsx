@@ -1,40 +1,69 @@
 // components/profile/ProfileHero.tsx
-import { Camera, Eye, ImageIcon, MapPin, Pencil } from 'lucide-react-native';
+import { Camera, ImageIcon, MapPin, Pencil } from 'lucide-react-native';
+import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import AvatarFrameOverlay from '@/components/profile/AvatarFrameOverlay';
+import type { FrameItem } from '@/components/profile/avatarFrames';
 import type { ProfileUser } from '@/types/profile';
 
 type Props = {
   user: ProfileUser;
   onEdit?: () => void;
-  onViewPublic?: () => void;
   onChangeCover?: () => void;
   onChangeAvatar?: () => void;
+  /** Khung avatar đang equip (Phase 6a); null/undefined = không khung. */
+  frame?: FrameItem | null;
 };
 
 export default function ProfileHero({
   user,
   onEdit,
-  onViewPublic,
   onChangeCover,
   onChangeAvatar,
+  frame,
 }: Props) {
   return (
     <View>
-      {/* Ảnh bìa */}
+      {/* Ảnh bìa — ảnh thật nếu có, không thì fallback màu + coverText */}
       <View style={styles.cover}>
-        <Text style={styles.coverText}>{user.coverText}</Text>
+        {user.coverImageUrl ? (
+          <Image
+            source={{ uri: user.coverImageUrl }}
+            style={styles.coverImage}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : (
+          <Text style={styles.coverText}>{user.coverText}</Text>
+        )}
         <Pressable style={styles.coverButton} onPress={onChangeCover}>
           <ImageIcon size={12} color="#6B7280" />
           <Text style={styles.coverButtonText}>Đổi ảnh bìa</Text>
         </Pressable>
       </View>
 
-      {/* Avatar + trạng thái */}
+      {/* Avatar + trạng thái — ảnh thật nếu có, không thì initials-circle */}
       <View style={styles.avatarRow}>
         <View>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user.initials}</Text>
+          {/* Khung avatar (Phase 6a): overlay SVG tuyệt đối lên avatar (không che
+              ảnh, không chặn gesture — pointerEvents). Kích thước = avatar + viền. */}
+          <View style={styles.avatarWrap}>
+            <View style={styles.avatar}>
+              {user.avatarUrl ? (
+                <Image
+                  source={{ uri: user.avatarUrl }}
+                  style={styles.avatarImage}
+                  contentFit="cover"
+                  transition={200}
+                />
+              ) : (
+                <Text style={styles.avatarText}>{user.initials}</Text>
+              )}
+            </View>
+            <View style={styles.frameLayer} pointerEvents="none">
+              <AvatarFrameOverlay frame={frame ?? null} size={AVATAR + 8} />
+            </View>
           </View>
           <Pressable style={styles.camera} onPress={onChangeAvatar}>
             <Camera size={12} color="#fff" />
@@ -51,9 +80,6 @@ export default function ProfileHero({
       <View style={styles.info}>
         <View style={styles.nameRow}>
           <Text style={styles.name}>{user.name}</Text>
-          <View style={styles.plan}>
-            <Text style={styles.planText}>{user.plan}</Text>
-          </View>
         </View>
         <Text style={styles.sub}>
           {user.major} · {user.cohort} · {user.campusCode}
@@ -66,15 +92,11 @@ export default function ProfileHero({
         </View>
       </View>
 
-      {/* Nút */}
+      {/* Nút — "Xem view công khai" đã bỏ theo quyết định (plan). */}
       <View style={styles.actions}>
         <Pressable style={[styles.button, styles.primary]} onPress={onEdit}>
           <Pencil size={14} color="#fff" />
           <Text style={styles.primaryText}>Chỉnh sửa</Text>
-        </Pressable>
-        <Pressable style={[styles.button, styles.outline]} onPress={onViewPublic}>
-          <Eye size={14} color="#374151" />
-          <Text style={styles.outlineText}>Xem view công khai</Text>
         </Pressable>
       </View>
     </View>
@@ -93,6 +115,15 @@ const styles = StyleSheet.create({
     padding: 16,
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  coverImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
   },
   coverText: { fontSize: 15, fontWeight: '800', color: '#7C2D12', lineHeight: 20 },
   coverButton: {
@@ -125,6 +156,22 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  // Khung avatar (6a): wrapper giữ avatar + overlay tuyệt đối (lớn hơn để
+  // vòng khung nằm ngoài viền trắng). pointerEvents="none" ở frameLayer.
+  avatarWrap: { width: AVATAR + 8, height: AVATAR + 8, alignItems: 'center', justifyContent: 'center' },
+  frameLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: AVATAR + 8,
+    height: AVATAR + 8,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: AVATAR / 2,
   },
   avatarText: { color: '#fff', fontSize: 28, fontWeight: '800' },
   camera: {
@@ -156,13 +203,6 @@ const styles = StyleSheet.create({
   info: { paddingHorizontal: 20, marginTop: 8 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   name: { fontSize: 26, fontWeight: '800', color: '#111827' },
-  plan: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    backgroundColor: '#FFE9D6',
-  },
-  planText: { fontSize: 10, fontWeight: '800', color: '#C2410C' },
   sub: { fontSize: 13, color: '#6B7280', marginTop: 4 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 6 },
   location: { fontSize: 12, fontWeight: '600', color: '#374151' },
@@ -178,11 +218,4 @@ const styles = StyleSheet.create({
   },
   primary: { flex: 1, backgroundColor: '#F97316' },
   primaryText: { color: '#fff', fontSize: 14, fontWeight: '800' },
-  outline: {
-    flex: 1.3,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  outlineText: { color: '#374151', fontSize: 13, fontWeight: '700' },
 });

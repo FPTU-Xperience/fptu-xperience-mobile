@@ -3,6 +3,7 @@ import {
   CalendarDays,
   ChevronRight,
   Flag,
+  Gift,
   Trophy,
   type LucideIcon,
 } from 'lucide-react-native';
@@ -15,6 +16,7 @@ const ICONS: Record<MenuIconKind, { icon: LucideIcon; bg: string; color: string 
   flag: { icon: Flag, bg: '#FFE9D6', color: '#F97316' },
   calendar: { icon: CalendarDays, bg: '#DDF1FA', color: '#0E7490' },
   trophy: { icon: Trophy, bg: '#FFE9D6', color: '#F97316' },
+  gift: { icon: Gift, bg: '#E9D5FF', color: '#7C3AED' },
 };
 
 type Props = {

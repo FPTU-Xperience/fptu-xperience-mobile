@@ -9,6 +9,10 @@ const THICK = 4;
 type Props = { size: number };
 
 export default function ScanFrame({ size }: Props) {
+  // Idiom Animated.Value (native driver): đọc .current trong render là chủ đích
+  // (UI thread tự update). Rule react-hooks/refs (React Compiler) không hiểu
+  // Animated legacy nên scoped-disable tại 2 chỗ đọc.
+  // eslint-disable-next-line react-hooks/refs
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -22,6 +26,7 @@ export default function ScanFrame({ size }: Props) {
     return () => loop.stop();
   }, [progress]);
 
+  // eslint-disable-next-line react-hooks/refs
   const translateY = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [10, size - 12],

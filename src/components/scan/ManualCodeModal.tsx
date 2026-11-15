@@ -1,5 +1,5 @@
 // components/scan/ManualCodeModal.tsx
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -22,10 +22,12 @@ type Props = {
 export default function ManualCodeModal({ visible, submitting = false, onClose, onSubmit }: Props) {
   const [code, setCode] = useState('');
 
-  // Xóa mã cũ mỗi lần mở lại
-  useEffect(() => {
+  // Xóa mã cũ mỗi lần mở lại — adjust state khi prop đổi (render, không phải effect).
+  const [prevVisible, setPrevVisible] = useState(visible);
+  if (visible !== prevVisible) {
+    setPrevVisible(visible);
     if (visible) setCode('');
-  }, [visible]);
+  }
 
   const canSubmit = code.trim().length > 0 && !submitting;
 

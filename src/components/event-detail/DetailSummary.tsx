@@ -1,6 +1,6 @@
 // components/event-detail/DetailSummary.tsx
 import { CalendarDays, Clock, MapPin } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ActivityStatus } from '@/types/activity';
 import type { ActivityDetail, RegisterState } from '@/types/activityDetail';
@@ -20,11 +20,6 @@ type Props = {
 
 export default function DetailSummary({ detail, register, onRegister, onPressClub }: Props) {
   const status = STATUS[detail.status];
-  const label = register.registered
-    ? 'Đã đăng ký'
-    : detail.status === 'ended'
-      ? 'Đã kết thúc'
-      : 'Đăng ký tham gia';
 
   return (
     <View style={styles.card}>

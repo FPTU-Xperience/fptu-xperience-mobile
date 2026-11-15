@@ -26,6 +26,8 @@ const TABS: Record<string, TabConfig> = {
 // Route phụ (không hiện trên bar) -> tab cha sẽ được tô sáng khi đang ở route phụ đó
 const PARENT_TAB: Record<string, string> = {
     'my-clubs': 'profile',
+    // Route lồng của tab profile (màn chỉnh sửa hồ sơ) — screen name "profile/edit"
+    'profile/edit': 'profile',
 };
 
 // Type tối thiểu, khớp với props mà tabBar thực sự nhận

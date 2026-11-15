@@ -18,6 +18,8 @@ export default function ScanScreen() {
 
   // Chỉ bật camera + GPS khi tab đang được focus
   const [focused, setFocused] = useState(false);
+  // Khai báo trước useFocusEffect (cleanup bên trong có gọi setTorch(false)).
+  const [torch, setTorch] = useState(false);
   useFocusEffect(
     useCallback(() => {
       setFocused(true);
@@ -30,7 +32,6 @@ export default function ScanScreen() {
 
   const location = useCurrentLocation(focused);
   const [place, setPlace] = useState<PlaceInfo | null>(null);
-  const [torch, setTorch] = useState(false);
   const [busy, setBusy] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
 

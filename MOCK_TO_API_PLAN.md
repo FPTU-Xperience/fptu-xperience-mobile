@@ -2,6 +2,11 @@
 
 > Ngày: 2026-05-08 · Người viết: Claude Code · Trạng thái: bản kế hoạch (chưa viết code)
 >
+> **Cập nhật (Profile track) — 2026-07-24:** Track Profile (`fptux-mobile`, phases trong `PLAN_PROFILE_TAB.md`) đã **hoàn tất tới Phase 7 (nghiệm thu + dọn dẹp)**:
+> - `mockProfile.ts` đã **xóa**; mọi dữ liệu Profile (feed, radar, contributions, khung avatar + kho quà CLB) đọc từ API thật qua `services/profile.ts` + `services/rewards.ts`.
+> - Cổng nghiệm thu: `npx tsc --noEmit` = **0 lỗi** (đã xóa scaffold cô lập `src/components/ui/collapsible.tsx`). `npx expo lint` còn 9 issue **đều thuộc track khác / deferred** (scan 7, web-scaffold 1, DetailSummary 2) — **không có** lỗi trong file Phase Profile.
+> - Chưa làm (theo plan): Phase 5 (scan/check-in, chờ BE xác nhận format QR) + Phase 7 auth thật (§11 session layer) + test máy thật (login Google/email + dev token, đối chiếu web `/v2/profile`).
+>
 > Mục tiêu: gỡ toàn bộ `src/services/mock*.ts` khỏi app, mọi màn hình đọc dữ liệu từ FPTU ClubHub API Gateway (`EXPO_PUBLIC_API_URL=https://clubreporthub.duckdns.org`).
 >
 > **Quyết định đã chốt (2026-05-08):**
