@@ -2,7 +2,6 @@ import {
     CalendarDays,
     Compass,
     Sparkles,
-    User,
     Users,
     type LucideIcon,
 } from 'lucide-react-native';
@@ -20,12 +19,11 @@ const TABS: Record<string, TabConfig> = {
     allClubs: { icon: Users, label: 'Câu lạc bộ' },
     activity: { icon: Sparkles, label: 'Hoạt động' },
     schedule: { icon: CalendarDays, label: 'Lịch Trình' },
-    profile: { icon: User, label: 'Hồ sơ' },
+    'my-clubs': { icon: Users, label: 'Câu lạc bộ của tôi' },
 };
 
 // Route phụ (không hiện trên bar) -> tab cha sẽ được tô sáng khi đang ở route phụ đó
 const PARENT_TAB: Record<string, string> = {
-    'my-clubs': 'profile',
     // Route lồng của tab profile (màn chỉnh sửa hồ sơ) — screen name "profile/edit"
     'profile/edit': 'profile',
 };

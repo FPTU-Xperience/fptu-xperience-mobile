@@ -42,7 +42,7 @@ export default function MyClubsScreen() {
 
   return (
     <View style={styles.root}>
-      <MyClubsTopBar onBack={() => router.navigate('/profile')} />
+      <MyClubsTopBar />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <MyClubsHeader onExplore={() => router.navigate('/allClubs')} />

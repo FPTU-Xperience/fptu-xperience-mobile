@@ -2,7 +2,7 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { BookOpen, Heart } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import Card from '@/components/common/Card';
 import CardTitle from '@/components/common/CardTitle';
@@ -13,7 +13,6 @@ import SegmentedControl from '@/components/common/SegmentedControl';
 import ClubsCard from '@/components/profile/ClubsCard';
 import CompetencyCard from '@/components/profile/CompetencyCard';
 import EvidenceTab from '@/components/profile/EvidenceTab';
-import ManageMenu from '@/components/profile/ManageMenu';
 import ProfileHero from '@/components/profile/ProfileHero';
 import ProfileImageModal from '@/components/profile/ProfileImageModal';
 import RewardsSheet from '@/components/profile/RewardsSheet';
@@ -26,12 +25,12 @@ import { fetchMyCosmetics } from '@/services/rewards';
 import { getFrame } from '@/components/profile/avatarFrames';
 import { frameUnlocked, loadFrame, saveFrame } from '@/services/frameState';
 import type { ProfileImageKind } from '@/services/profile-media';
-import type { ProfileMenuItem, ProfileTabKey } from '@/types/profile';
+import type { ProfileTabKey } from '@/types/profile';
 import type { CosmeticInventoryPage } from '@/types/api';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [tab, setTab] = useState<ProfileTabKey>('overview');
   const [imageModal, setImageModal] = useState<ProfileImageKind | null>(null);
 
@@ -102,12 +101,6 @@ export default function ProfileScreen() {
     }, [retry]),
   );
 
-  const handleMenuPress = (item: ProfileMenuItem) => {
-    // m1 = "Câu lạc bộ của tôi" | m4 = "Kho quà CLB" (Phase 6b)
-    if (item.id === 'm1') router.push('/my-clubs');
-    if (item.id === 'm4') setRewardsOpen(true);
-  };
-
   const openRewards = useCallback(() => setRewardsOpen(true), []);
 
   // Kho quà đổi thành công → refresh inventory (mở khung mới).
@@ -167,11 +160,22 @@ export default function ProfileScreen() {
               <CompetencyCard data={feed.competency} />
               <SkillsCard skills={feed.skills} />
               <ClubsCard clubs={feed.clubs} />
-              <ManageMenu items={feed.menu} onPressItem={handleMenuPress} />
             </>
           ) : (
             <EvidenceTab />
           )}
+
+          <Pressable
+            style={styles.logoutButton}
+            onPress={() =>
+              Alert.alert('Đăng xuất', `Bạn có muốn đăng xuất khỏi ${user?.email ?? 'tài khoản này'}?`, [
+                { text: 'Hủy', style: 'cancel' },
+                { text: 'Đăng xuất', style: 'destructive', onPress: () => void signOut() },
+              ])
+            }
+            accessibilityRole="button">
+            <Text style={styles.logoutText}>Đăng xuất</Text>
+          </Pressable>
         </View>
       )}
 
@@ -210,4 +214,16 @@ const styles = StyleSheet.create({
   loader: { marginTop: 40 },
   bio: { fontSize: 13, lineHeight: 20, color: '#4B5563', marginTop: 12 },
   bioEmpty: { fontSize: 13, lineHeight: 20, color: '#9CA3AF', marginTop: 12 },
+  logoutButton: {
+    marginHorizontal: 16,
+    marginTop: 24,
+    height: 46,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF1F2',
+    borderWidth: 1,
+    borderColor: '#FECDD3',
+  },
+  logoutText: { color: '#BE123C', fontSize: 14, fontWeight: '800' },
 });
