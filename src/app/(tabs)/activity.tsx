@@ -1,6 +1,5 @@
 // app/(tabs)/activity.tsx
 import { useRouter } from 'expo-router';
-import { Ticket } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
@@ -40,12 +39,6 @@ export default function ActivityScreen() {
       <ScreenHeader
         campus={feed?.campus}
         title="Tất cả hoạt động sắp tới"
-        subtitle="Đừng bỏ lỡ các sự kiện nổi bật tại Hola Campus"
-        right={
-          <View style={styles.ticket}>
-            <Ticket size={16} color="#F97316" />
-          </View>
-        }
       />
       <SearchBar value={keyword} onChangeText={setKeyword} placeholder="Tìm hoạt động..." />
       {feed && <FilterChips filters={feed.filters} selected={filter} onSelect={setFilter} />}

@@ -123,7 +123,7 @@ export default function EventCard({ event, onPressDetail }: Props) {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Footer event={event} theme={theme} />
+        {/* <Footer event={event} theme={theme} /> */}
         <Pressable style={styles.detail} onPress={() => onPressDetail?.(event)}>
           <Text style={styles.detailText}>Xem chi tiết</Text>
           <ArrowUpRight size={14} color="#F97316" />

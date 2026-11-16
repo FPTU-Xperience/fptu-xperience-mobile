@@ -13,8 +13,8 @@ export default function TabsLayout() {
       screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="explore" />
       <Tabs.Screen name="allClubs" />
-      <Tabs.Screen name="activity" />
       <Tabs.Screen name="schedule" />
+      <Tabs.Screen name="activity" />
       <Tabs.Screen name="profile" />
       <Tabs.Screen name="scan" />
       <Tabs.Screen name="my-clubs" />

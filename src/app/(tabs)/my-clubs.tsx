@@ -1,15 +1,15 @@
 // app/(tabs)/my-clubs.tsx
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Share, StyleSheet, Text } from 'react-native';
 
 import ApplicationsCard from '@/components/my-clubs/ApplicationsCard';
 import FeaturedClubs from '@/components/my-clubs/FeaturedClubs';
 import MyClubCard from '@/components/my-clubs/MyClubCard';
 import MyClubsHeader from '@/components/my-clubs/MyClubsHeader';
-import MyClubsTopBar from '@/components/my-clubs/MyClubsTopBar';
 import JoinForm from '@/components/club-detail/JoinForm';
 import ErrorState from '@/components/common/ErrorState';
+import ScreenLayout from '@/components/common/ScreenLayout';
 import { useApiState } from '@/hooks/useApiState';
 import { useAuth } from '@/providers/AuthProvider';
 import { fetchMyClubs } from '@/services/myClubs';
@@ -41,11 +41,8 @@ export default function MyClubsScreen() {
   );
 
   return (
-    <View style={styles.root}>
-      <MyClubsTopBar />
-
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <MyClubsHeader onExplore={() => router.navigate('/allClubs')} />
+    <ScreenLayout title="Câu lạc bộ của tôi">
+      <MyClubsHeader onExplore={() => router.navigate('/allClubs')} />
 
         {hasError && error ? (
           <ErrorState message={error} onRetry={retry} loading={loading} />
@@ -83,7 +80,6 @@ export default function MyClubsScreen() {
             />
           </>
         )}
-      </ScrollView>
 
       <JoinForm
         visible={joinTarget !== null}
@@ -98,14 +94,11 @@ export default function MyClubsScreen() {
           Alert.alert('Đã gửi đơn', 'Hồ sơ của bạn đã được gửi tới ban chủ nhiệm CLB.');
         }}
       />
-    </View>
+    </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F9FAFB' },
-  // chừa chỗ cho custom tab bar + nút nổi ở giữa
-  content: { paddingBottom: 140 },
   loader: { marginTop: 40 },
   empty: { textAlign: 'center', color: '#9CA3AF', marginTop: 32 },
 });

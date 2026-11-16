@@ -1,0 +1,83 @@
+module.exports = {
+  expo: {
+    name: "fptu-xperience-mobile",
+    slug: "fptu-xperience-mobile",
+    version: "1.0.0",
+    orientation: "portrait",
+    icon: "./assets/images/icon.png",
+    scheme: "fptuxperiencemobile",
+    userInterfaceStyle: "automatic",
+    ios: {
+      icon: "./assets/expo.icon"
+    },
+    android: {
+      package: "vn.fptu.xperience.mobile",
+      adaptiveIcon: {
+        backgroundColor: "#E6F4FE",
+        foregroundImage: "./assets/images/android-icon-foreground.png",
+        backgroundImage: "./assets/images/android-icon-background.png",
+        monochromeImage: "./assets/images/android-icon-monochrome.png"
+      },
+      predictiveBackGestureEnabled: false,
+      permissions: [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    web: {
+      output: "server",
+      favicon: "./assets/images/favicon.png"
+    },
+    plugins: [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          backgroundColor: "#208AEF",
+          image: "./assets/images/splash-icon.png",
+          imageWidth: 76
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          cameraPermission: "Cho phép ứng dụng dùng camera để quét mã QR điểm danh."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          locationWhenInUsePermission: "Cho phép ứng dụng lấy vị trí để xác nhận điểm danh."
+        }
+      ],
+      "expo-secure-store",
+      [
+        "react-native-nitro-google-signin",
+        {
+          iosUrlScheme: "com.googleusercontent.apps.XXXXX"
+        }
+      ],
+      "expo-status-bar"
+    ],
+    experiments: {
+      typedRoutes: true,
+      reactCompiler: true
+    },
+    extra: {
+      router: {
+        asyncRoutes: {
+          web: true
+        }
+      },
+      eas: {
+        projectId: "7e062399-edf6-4923-a503-0ef369ca88b3"
+      },
+      // Đọc linh hoạt từ biến môi trường (GitHub Actions hoặc file .env local)
+      googleClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || "",
+      apiUrl: process.env.EXPO_PUBLIC_API_URL || "",
+    },
+    owner: "anhptse196852"
+  }
+};

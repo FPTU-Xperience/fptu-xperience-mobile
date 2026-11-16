@@ -41,7 +41,6 @@ export default function AllClubsScreen() {
       <ScreenHeader
         campus={feed?.campus}
         title="Tất cả câu lạc bộ"
-        subtitle={`Khám phá ${feed?.total ?? 0} cộng đồng sinh viên sôi động tại FPTU`}
       />
       <SearchBar
         value={keyword}

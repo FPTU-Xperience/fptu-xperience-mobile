@@ -11,7 +11,6 @@ import DiscoverSectionTitle from '@/components/discover/DiscoverSectionTitle';
 import HeroCard from '@/components/discover/HeroCard';
 import MoreCommunityCard from '@/components/discover/MoreCommunityCard';
 import Pagination from '@/components/discover/Pagination';
-import QuickActions from '@/components/discover/QuickActions';
 import RecoClubCard from '@/components/discover/RecoClubCard';
 import RecoEventCard from '@/components/discover/RecoEventCard';
 import { useApiState } from '@/hooks/useApiState';
@@ -82,11 +81,6 @@ export default function ExploreScreen() {
           hero={data.hero}
           onPressPrimary={() => router.navigate('/allClubs')}
           onPressSecondary={() => router.navigate('/activity')}
-        />
-
-        <QuickActions
-          actions={data.quickActions}
-          onPress={(a) => router.navigate(TAB_ROUTES[a.route])}
         />
 
         {/* Hoạt động dành cho bạn */}

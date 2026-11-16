@@ -1,5 +1,5 @@
 // components/schedule/ScheduleItem.tsx
-import { Clock, MapPin, QrCode, Ticket } from 'lucide-react-native';
+import { Clock, MapPin } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ScheduleEvent, TicketStatus } from '@/types/schedule';
@@ -17,7 +17,6 @@ type Props = {
 
 export default function ScheduleItem({ event, onPress }: Props) {
   const status = STATUS[event.status];
-  const ActionIcon = event.action === 'qr' ? QrCode : Ticket;
 
   return (
     <Pressable style={styles.card} onPress={() => onPress?.(event)}>
@@ -53,9 +52,6 @@ export default function ScheduleItem({ event, onPress }: Props) {
                 {event.venue}
               </Text>
             </View>
-          </View>
-          <View style={styles.actionBox}>
-            <ActionIcon size={16} color="#F97316" />
           </View>
         </View>
       </View>
