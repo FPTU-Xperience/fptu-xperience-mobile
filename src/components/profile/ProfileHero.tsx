@@ -69,11 +69,6 @@ export default function ProfileHero({
             <Camera size={12} color="#fff" />
           </Pressable>
         </View>
-
-        <View style={styles.status}>
-          <View style={styles.statusDot} />
-          <Text style={styles.statusText}>{user.statusLabel}</Text>
-        </View>
       </View>
 
       {/* Thông tin */}

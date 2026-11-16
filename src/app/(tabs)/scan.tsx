@@ -7,7 +7,6 @@ import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native'
 import CampusLabel from '@/components/common/CampusLabel';
 import ScreenLayout from '@/components/common/ScreenLayout';
 import LocationCard from '@/components/scan/LocationCard';
-import ManualCodeModal from '@/components/scan/ManualCodeModal';
 import ScannerPanel from '@/components/scan/ScannerPanel';
 import { useCurrentLocation } from '@/hooks/useCurrentLocation';
 import { fetchPlaceInfo, submitCheckIn } from '@/services/mockScan';
@@ -97,7 +96,6 @@ export default function ScanScreen() {
       <LocationCard
         location={location}
         place={place}
-        onPressManual={() => setManualOpen(true)}
         onOpenSettings={() => Linking.openSettings()}
       />
 
@@ -105,13 +103,6 @@ export default function ScanScreen() {
         <CircleHelp size={14} color="#C2410C" />
         <Text style={styles.helpText}>Cần hỗ trợ?</Text>
       </Pressable>
-
-      <ManualCodeModal
-        visible={manualOpen}
-        submitting={busy}
-        onClose={() => setManualOpen(false)}
-        onSubmit={handleCode}
-      />
     </ScreenLayout>
   );
 }

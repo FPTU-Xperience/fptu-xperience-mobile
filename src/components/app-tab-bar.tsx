@@ -3,6 +3,7 @@ import {
     Compass,
     Sparkles,
     Users,
+    NotepadText,
     type LucideIcon,
 } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -10,16 +11,17 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 const ACTIVE = '#F97316';
 const INACTIVE = '#8E8E93';
 
-type TabConfig = { icon: LucideIcon; label: string };
+// center: true => hiển thị dạng nút tròn nổi lên trên thanh bar
+type TabConfig = { icon: LucideIcon; label: string; center?: boolean };
 
 // key = tên route (tên file trong app/(tabs)). Route không có ở đây sẽ không hiện trên bar
 // (vd: scan, my-clubs).
 const TABS: Record<string, TabConfig> = {
     explore: { icon: Compass, label: 'Khám Phá' },
     allClubs: { icon: Users, label: 'Câu lạc bộ' },
+    schedule: { icon: CalendarDays, label: 'Lịch Trình', center: true },
     activity: { icon: Sparkles, label: 'Hoạt động' },
-    schedule: { icon: CalendarDays, label: 'Lịch Trình' },
-    'my-clubs': { icon: Users, label: 'Câu lạc bộ của tôi' },
+    'my-clubs': { icon: NotepadText, label: 'Đơn của tôi' },
 };
 
 // Route phụ (không hiện trên bar) -> tab cha sẽ được tô sáng khi đang ở route phụ đó
@@ -80,6 +82,22 @@ export default function AppTabBar({
 
                 const color = focused ? ACTIVE : INACTIVE;
 
+                // Nút giữa: vòng tròn cam nổi lên trên thanh bar
+                if (config.center) {
+                    return (
+                        <Pressable key={route.key} onPress={onPress} style={styles.centerSlot}>
+                            <View style={styles.centerButton}>
+                                <Icon size={28} color="#fff" strokeWidth={2} />
+                            </View>
+                            <Text
+                                style={[styles.label, styles.centerLabel, { color }]}
+                                numberOfLines={1}>
+                                {config.label}
+                            </Text>
+                        </Pressable>
+                    );
+                }
+
                 return (
                     <Pressable key={route.key} onPress={onPress} style={styles.tab}>
                         <Icon size={24} color={color} strokeWidth={focused ? 2.4 : 2} />
@@ -96,7 +114,8 @@ export default function AppTabBar({
 const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
-        alignItems: 'center',
+        // flex-end để nút giữa có thể nhô lên trên các tab còn lại
+        alignItems: 'flex-end',
         backgroundColor: '#fff',
         paddingTop: 10,
         borderTopLeftRadius: 20,
@@ -117,5 +136,30 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 11,
         fontWeight: '500',
+    },
+    centerSlot: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 4,
+    },
+    centerButton: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: ACTIVE,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: -36, // nổi lên trên thanh bar
+        borderWidth: 4,
+        borderColor: '#fff',
+        shadowColor: ACTIVE,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    centerLabel: {
+        marginTop: 4,
+        fontWeight: '600',
     },
 });

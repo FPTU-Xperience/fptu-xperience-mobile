@@ -7,7 +7,6 @@ import type { LocationState, PlaceInfo } from '@/types/scan';
 type Props = {
   location: LocationState;
   place: PlaceInfo | null;
-  onPressManual: () => void;
   onOpenSettings: () => void;
 };
 
@@ -19,7 +18,7 @@ const BADGE = {
   error: { label: 'Lỗi GPS', bg: '#FEE2E2', color: '#B91C1C', dot: '#EF4444' },
 } as const;
 
-export default function LocationCard({ location, place, onPressManual, onOpenSettings }: Props) {
+export default function LocationCard({ location, place, onOpenSettings }: Props) {
   const badge = BADGE[location.status];
 
   return (
@@ -72,11 +71,6 @@ export default function LocationCard({ location, place, onPressManual, onOpenSet
           {place.nearestActivity}
         </Text>
       )}
-
-      <Pressable style={styles.button} onPress={onPressManual}>
-        <Keyboard size={16} color="#1D4ED8" />
-        <Text style={styles.buttonText}>Nhập mã điểm danh thủ công</Text>
-      </Pressable>
     </View>
   );
 }

@@ -37,6 +37,7 @@ export interface ClubFeed {
   total: number;
   clubs: Club[];
   filters: ClubFilter[];
+  nextCursor?: number | null;
 }
 
 export interface FetchClubsParams {

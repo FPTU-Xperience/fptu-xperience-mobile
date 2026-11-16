@@ -17,7 +17,7 @@ export default function MyClubsHeader({ onExplore }: Props) {
         </Pressable>
       </View>
 
-      <Text style={styles.subtitle}>Mỗi cộng đồng, một phần trong hành trình của bạn.</Text>
+      {/* <Text style={styles.subtitle}>Mỗi cộng đồng, một phần trong hành trình của bạn.</Text> */}
     </View>
   );
 }

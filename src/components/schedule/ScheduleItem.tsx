@@ -12,14 +12,14 @@ const STATUS: Record<TicketStatus, { label: string; bg: string; color: string }>
 
 type Props = {
   event: ScheduleEvent;
-  onPress?: (event: ScheduleEvent) => void;
+  onPressDetail?: (event: ScheduleEvent) => void;
 };
 
-export default function ScheduleItem({ event, onPress }: Props) {
+export default function ScheduleItem({ event, onPressDetail }: Props) {
   const status = STATUS[event.status];
 
   return (
-    <Pressable style={styles.card} onPress={() => onPress?.(event)}>
+    <Pressable style={styles.card} onPress={() => onPressDetail?.(event)}>
       <View style={[styles.dateBox, { backgroundColor: event.dateBoxBg }]}>
         <Text style={[styles.day, { color: event.dateBoxColor }]}>{event.day}</Text>
         <Text style={[styles.month, { color: event.dateBoxColor }]}>{event.month}</Text>
@@ -48,9 +48,9 @@ export default function ScheduleItem({ event, onPress }: Props) {
             </View>
             <View style={styles.metaItem}>
               <MapPin size={12} color="#F97316" />
-              <Text style={styles.metaText} numberOfLines={1}>
+              {/* <Text style={styles.metaText} numberOfLines={1}>
                 {event.venue}
-              </Text>
+              </Text> */}
             </View>
           </View>
         </View>

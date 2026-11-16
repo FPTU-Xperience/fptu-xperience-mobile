@@ -255,14 +255,16 @@ function deriveCompetency(radar: StudentRadar | null): Competency {
   // Hệ số: cân bằng giữa độ sâu và độ đều.
   const factor = (depth / 100) * (0.6 + 0.4 * evenness);
 
-  const plusOne = radar?.plusOne;
-  const allAxes = plusOne
-    ? [...axes, { label: PLUS_ONE_LABEL, value: Math.round(plusOne.saturatedScore) }]
-    : axes;
+  // const plusOne = radar?.plusOne;
+  // const allAxes = plusOne
+  //   ? [...axes, { 
+  //     label: PLUS_ONE_LABEL, 
+  //     value: Math.round(plusOne.saturatedScore) }]
+  //   : axes;
 
   return {
     quote: 'Hành trình của bạn không chỉ được đo bằng điểm số',
-    axes: allAxes,
+    axes: axes, //allAxes
     depth: Math.round(depth),
     evenness: Number(evenness.toFixed(2)),
     factor: Number(factor.toFixed(2)),

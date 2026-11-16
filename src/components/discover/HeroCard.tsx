@@ -24,30 +24,7 @@ export default function HeroCard({ hero, onPressPrimary, onPressSecondary }: Pro
       <Text style={styles.highlight}>{hero.highlight}</Text>
       <Text style={styles.desc}>{hero.description}</Text>
 
-      {/* <View style={styles.buttons}>
-        <Pressable style={[styles.button, styles.primary]} onPress={onPressPrimary}>
-          <Text style={styles.primaryText}>{hero.primaryCta}</Text>
-        </Pressable>
-        <Pressable style={[styles.button, styles.secondary]} onPress={onPressSecondary}>
-          <Text style={styles.secondaryText}>{hero.secondaryCta}</Text>
-        </Pressable>
-      </View> */}
-
-      {/* <View style={styles.miniRow}>
-        {hero.miniCards.map((m) => (
-          <View key={m.id} style={[styles.mini, m.tone === 'dark' ? styles.miniDark : styles.miniLight]}>
-            <Text style={[styles.miniLabel, m.tone === 'dark' && styles.miniLabelDark]}>
-              {m.label}
-            </Text>
-            <Text style={[styles.miniTitle, m.tone === 'dark' && styles.miniTitleDark]}>
-              {m.title}
-            </Text>
-            {m.note ? <Text style={styles.miniNote}>{m.note}</Text> : null}
-          </View>
-        ))}
-      </View> */}
-
-      <View style={styles.proof}>
+      {/* <View style={styles.proof}>
         <View style={styles.avatars}>
           {hero.socialProof.avatars.map((a, i) => (
             <View key={a} style={[styles.avatar, i > 0 && styles.avatarOverlap]}>
@@ -56,7 +33,7 @@ export default function HeroCard({ hero, onPressPrimary, onPressSecondary }: Pro
           ))}
         </View>
         <Text style={styles.proofText}>{hero.socialProof.text}</Text>
-      </View>
+      </View> */}
     </View>
   );
 }

@@ -126,41 +126,99 @@ function toClub(dto: ClubDirectory): Club {
   };
 }
 
-/**
- * GET /api/clubs
- * @param keyword tìm theo tên/mã CLB
- * @param filter all | academic | tech | community | arts
- * @param recruitingOnly chỉ lấy CLB đang tuyển
- */
-export async function fetchClubs(params: {
-  keyword?: string;
-  filter?: ClubFilterKey;
-  recruitingOnly?: boolean;
-} = {}): Promise<ClubFeed> {
-  const { keyword = '', filter = 'all', recruitingOnly = false } = params;
+// ---------------------------------------------------------------------------
+// Danh sách CLB (cuộn vô hạn)
+//
+// BE chưa hỗ trợ phân trang: GET /api/clubs trả TOÀN BỘ danh sách. Vì vậy:
+//  - Trang đầu (cursor = null) luôn gọi API để lấy dữ liệu mới.
+//  - Các trang sau lấy từ bộ nhớ đệm (cùng từ khóa/bộ lọc, TTL ngắn) và cắt theo offset,
+//    không gọi lại mạng mỗi lần cuộn.
+// Khi BE hỗ trợ page/pageSize (hoặc cursor), chỉ cần sửa `loadClubList` + `fetchClubs`.
+// ---------------------------------------------------------------------------
+
+const LIST_CACHE_TTL_MS = 60_000;
+const CATEGORIES_CACHE_TTL_MS = 5 * 60_000;
+const DEFAULT_FILTERS: ClubFilter[] = [{ key: 'all', label: 'Tất cả' }];
+
+let listCache: { key: string; at: number; clubs: Club[] } | null = null;
+let categoriesCache: { at: number; filters: ClubFilter[] } | null = null;
+
+async function loadClubList(
+  keyword: string,
+  filter: ClubFilterKey,
+  recruitingOnly: boolean,
+  forceRefresh: boolean,
+): Promise<Club[]> {
+  const search = keyword.trim();
+  const key = JSON.stringify([search, filter, recruitingOnly]);
+
+  if (
+    !forceRefresh &&
+    listCache &&
+    listCache.key === key &&
+    Date.now() - listCache.at < LIST_CACHE_TTL_MS
+  ) {
+    return listCache.clubs;
+  }
 
   const query = toQuery({
-    search: keyword.trim() || null,
+    search: search || null,
     category: filter === 'all' ? null : UI_TO_BE_CATEGORY[filter],
     active: true,
     recruiting: recruitingOnly ? true : null,
   });
 
   const list = await apiFetch<ClubDirectory[]>(`/api/clubs${query}`);
+  const clubs = (list ?? []).map(toClub);
+  listCache = { key, at: Date.now(), clubs };
+  return clubs;
+}
+
+/**
+ * GET /api/clubs
+ * @param keyword tìm theo tên/mã CLB
+ * @param filter all | academic | tech | community | arts
+ * @param recruitingOnly chỉ lấy CLB đang tuyển
+ * @param cursor vị trí bắt đầu của trang (null = trang đầu). Dùng giá trị `nextCursor` của lần trước.
+ * @param limit số CLB mỗi trang. Bỏ trống = trả tất cả (không phân trang).
+ */
+export async function fetchClubs(params: {
+  keyword?: string;
+  filter?: ClubFilterKey;
+  recruitingOnly?: boolean;
+  cursor?: string | number | null;
+  limit?: number;
+} = {}): Promise<ClubFeed> {
+  const { keyword = '', filter = 'all', recruitingOnly = false, cursor = null, limit } = params;
+
+  const clubs = await loadClubList(keyword, filter, recruitingOnly, cursor === null);
+
+  const parsed = cursor === null ? 0 : Number(cursor);
+  const offset = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  const end = limit ? offset + limit : clubs.length;
+  const nextCursor = limit && end < clubs.length ? end : null;
+
+  // Lỗi tải danh mục không được làm hỏng cả danh sách CLB.
+  const filters = await fetchClubCategories().catch(() => DEFAULT_FILTERS);
 
   return {
     campus: CAMPUS_FALLBACK,
-    total: list.length,
-    clubs: list.map(toClub),
-    filters: await fetchClubCategories(),
+    total: clubs.length,
+    clubs: clubs.slice(offset, end),
+    nextCursor,
+    filters,
   };
 }
 
 /**
- * GET /api/clubs/categories → chip lọc.
+ * GET /api/clubs/categories → chip lọc (cache 5 phút).
  * Luôn có 'all' ở đầu; các danh mục BE không có key UI tương ứng bị gom về 'community'.
  */
 export async function fetchClubCategories(): Promise<ClubFilter[]> {
+  if (categoriesCache && Date.now() - categoriesCache.at < CATEGORIES_CACHE_TTL_MS) {
+    return categoriesCache.filters;
+  }
+
   const categories = await apiFetch<ClubCategoryDto[]>('/api/clubs/categories');
 
   const seen = new Map<ClubFilterKey, string>();
@@ -177,6 +235,8 @@ export async function fetchClubCategories(): Promise<ClubFilter[]> {
     const label = seen.get(key);
     if (label) filters.push({ key, label });
   }
+
+  categoriesCache = { at: Date.now(), filters };
   return filters;
 }
 

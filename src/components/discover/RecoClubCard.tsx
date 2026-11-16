@@ -2,7 +2,6 @@
 import { CalendarDays, ChevronDown } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { useTheme } from '@/hooks/use-theme';
 import type { RecoClub } from '@/types/recommendation';
 
 const BANNER_HEIGHT = 120;
@@ -15,10 +14,8 @@ type Props = {
 };
 
 export default function RecoClubCard({ club, onPress }: Props) {
-  const theme = useTheme();
-
   return (
-    <Pressable style={[styles.card, { backgroundColor: theme.background }]} onPress={() => onPress(club)}>
+    <Pressable style={styles.card} onPress={() => onPress(club)}>
       <View style={[styles.banner, { backgroundColor: club.bannerColor }]}>
         <View style={styles.deco} />
         <Text style={styles.hub}>{club.hubLabel}</Text>
@@ -42,7 +39,7 @@ export default function RecoClubCard({ club, onPress }: Props) {
           </View>
         </View>
 
-        <Text style={[styles.name, { color: theme.text }]}>{club.name}</Text>
+        <Text style={styles.name}>{club.name}</Text>
 
         <View style={styles.scheduleRow}>
           <CalendarDays size={13} color="#F97316" />
@@ -50,22 +47,21 @@ export default function RecoClubCard({ club, onPress }: Props) {
             style={[
               styles.schedule,
               !club.schedule && styles.scheduleEmpty,
-              !club.schedule && { color: theme.textSecondary },
             ]}>
             {club.schedule ?? 'Lịch sinh hoạt đang cập nhật'}
           </Text>
         </View>
 
-        <Text style={[styles.desc, { color: theme.textSecondary }]} numberOfLines={3}>
+        <Text style={styles.desc} numberOfLines={3}>
           {club.description}
         </Text>
       </View>
 
-      <View style={[styles.divider, { backgroundColor: theme.backgroundElement }]} />
+      <View style={styles.divider} />
       <View style={styles.footer}>
         <View style={styles.codeRow}>
           <View style={styles.codeDot} />
-          <Text style={[styles.code, { color: theme.textSecondary }]}>{club.code}</Text>
+          <Text style={styles.code}>{club.code}</Text>
         </View>
         <View style={styles.more}>
           <Text style={styles.moreText}>Khám phá</Text>
@@ -79,6 +75,7 @@ export default function RecoClubCard({ club, onPress }: Props) {
 const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
+    backgroundColor: '#fff',
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -139,13 +136,13 @@ const styles = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#F97316' },
   dotClosed: { backgroundColor: '#9CA3AF' },
 
-  name: { fontSize: 17, fontWeight: '800', lineHeight: 22, marginTop: 10 },
+  name: { fontSize: 17, fontWeight: '800', lineHeight: 22, marginTop: 10, color: '#111827' },
   scheduleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
   schedule: { fontSize: 12, fontWeight: '600', color: '#C2410C', flexShrink: 1 },
-  scheduleEmpty: { fontStyle: 'italic', fontWeight: '500' },
-  desc: { fontSize: 12.5, lineHeight: 18, marginTop: 8 },
+  scheduleEmpty: { fontStyle: 'italic', fontWeight: '500', color: '#4B5563' },
+  desc: { fontSize: 12.5, lineHeight: 18, marginTop: 8, color: '#4B5563' },
 
-  divider: { height: 1, marginHorizontal: 14 },
+  divider: { height: 1, marginHorizontal: 14, backgroundColor: '#E5E7EB' },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -155,7 +152,7 @@ const styles = StyleSheet.create({
   },
   codeRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   codeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#D1D5DB' },
-  code: { fontSize: 11, fontWeight: '600', letterSpacing: 0.3 },
+  code: { fontSize: 11, fontWeight: '600', letterSpacing: 0.3, color: '#4B5563' },
   more: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   moreText: { fontSize: 12, fontWeight: '800', color: '#C2410C' },
 });

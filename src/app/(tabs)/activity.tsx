@@ -50,7 +50,6 @@ export default function ActivityScreen() {
             {feed ? `${feed.events.length} hoạt động để khám phá` : ' '}
           </Text>
         </View>
-        <Text style={styles.semester}>{feed?.semester}</Text>
       </View>
 
       {hasError && error ? (

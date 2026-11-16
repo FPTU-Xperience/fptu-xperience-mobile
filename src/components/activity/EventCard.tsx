@@ -63,11 +63,10 @@ function Footer({ event, theme }: { event: ActivityEvent; theme: ReturnType<type
 }
 
 export default function EventCard({ event, onPressDetail }: Props) {
-  const theme = useTheme();
   const VenueIcon = VENUE_ICON[event.venue.kind];
 
   return (
-    <View style={[styles.card, { backgroundColor: theme.background }]}>
+    <View style={styles.card}>
       {/* Banner */}
       <View style={[styles.banner, { backgroundColor: event.bannerColor }]}>
         <View style={styles.bannerDeco} />
@@ -98,20 +97,20 @@ export default function EventCard({ event, onPressDetail }: Props) {
         </View>
 
         <View style={styles.infoBody}>
-          <Text style={[styles.organizer, { color: theme.textSecondary }]} numberOfLines={1}>
+          <Text style={styles.organizer} numberOfLines={1}>
             {event.organizer}
           </Text>
-          <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+          <Text style={styles.name} numberOfLines={1}>
             {event.name}
           </Text>
           <View style={styles.metaRow}>
             <View style={styles.meta}>
               <Clock size={12} color="#F97316" />
-              <Text style={[styles.metaText, { color: theme.textSecondary }]}>{event.time}</Text>
+              <Text style={styles.metaText}>{event.time}</Text>
             </View>
             <View style={styles.meta}>
               <VenueIcon size={12} color="#F97316" />
-              <Text style={[styles.metaText, { color: theme.textSecondary }]} numberOfLines={1}>
+              <Text style={styles.metaText} numberOfLines={1}>
                 {event.venue.label}
               </Text>
             </View>
@@ -119,7 +118,7 @@ export default function EventCard({ event, onPressDetail }: Props) {
         </View>
       </View>
 
-      <View style={[styles.divider, { backgroundColor: theme.backgroundElement }]} />
+      <View style={styles.divider} />
 
       {/* Footer */}
       <View style={styles.footer}>
@@ -137,6 +136,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     overflow: 'hidden',
+    backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
@@ -194,13 +194,13 @@ const styles = StyleSheet.create({
   day: { fontSize: 22, fontWeight: '800', lineHeight: 24 },
   month: { fontSize: 8, fontWeight: '700', marginTop: 2 },
   infoBody: { flex: 1, justifyContent: 'center' },
-  organizer: { fontSize: 11 },
-  name: { fontSize: 16, fontWeight: '800', marginTop: 2 },
+  organizer: { fontSize: 11, color: '#4B5563' },
+  name: { fontSize: 16, fontWeight: '800', marginTop: 2, color: '#111827' },
   metaRow: { flexDirection: 'row', gap: 12, marginTop: 6 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 },
-  metaText: { fontSize: 11, flexShrink: 1 },
+  metaText: { fontSize: 11, flexShrink: 1, color: '#4B5563' },
 
-  divider: { height: 1, marginHorizontal: 14 },
+  divider: { height: 1, marginHorizontal: 14, backgroundColor: '#E5E7EB' },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -25,14 +25,9 @@ export default function CompetencyCard({ data }: Props) {
       <CardTitle
         icon={Target}
         title="Bản đồ đa chiều năng lực"
-        right={
-          <View style={styles.live}>
-            <Text style={styles.liveText}>Realtime</Text>
-          </View>
-        }
       />
 
-      <Text style={styles.quote}>“{data.quote}”</Text>
+      {/* <Text style={styles.quote}>“{data.quote}”</Text> */}
 
       <RadarChart axes={data.axes} />
 

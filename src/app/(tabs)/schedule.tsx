@@ -12,7 +12,7 @@ import ScheduleItem from '@/components/schedule/ScheduleItem';
 import ScheduleTabs from '@/components/schedule/ScheduleTabs';
 import { useApiState } from '@/hooks/useApiState';
 import { fetchSchedule } from '@/services/schedule';
-import type { ScheduleTabKey } from '@/types/schedule';
+import type { ScheduleEvent, ScheduleTabKey } from '@/types/schedule';
 
 export default function ScheduleScreen() {
   const router = useRouter();
@@ -25,6 +25,10 @@ export default function ScheduleScreen() {
 
   const goToActivities = () => router.push('/activity');
 
+  const openDetail = (event: ScheduleEvent) => {
+    router.push({ pathname: '/event/[id]', params: { id: event.id } });
+  };
+
   const upcomingCount = feed ? feed.upcomingThisWeek.length + feed.upcomingNextWeek.length : 0;
   const attendedCount = feed?.attended.length ?? 0;
 
@@ -34,7 +38,7 @@ export default function ScheduleScreen() {
         campus={feed?.campus}
         eyebrow="KHÔNG GIAN CỦA BẠN"
         title="Lịch trình của tôi"
-        subtitle="Theo dõi các hoạt động, buổi sinh hoạt và workshop bạn đã đăng ký tham gia."
+      // subtitle="Theo dõi các hoạt động, buổi sinh hoạt và workshop bạn đã đăng ký tham gia."
       />
 
       <ScheduleTabs
@@ -62,7 +66,7 @@ export default function ScheduleScreen() {
               />
               <View style={styles.list}>
                 {feed.upcomingThisWeek.map((e) => (
-                  <ScheduleItem key={e.id} event={e} />
+                  <ScheduleItem key={e.id} event={e} onPressDetail={openDetail} />
                 ))}
               </View>
             </>
@@ -76,7 +80,7 @@ export default function ScheduleScreen() {
               />
               <View style={styles.list}>
                 {feed.upcomingNextWeek.map((e) => (
-                  <ScheduleItem key={e.id} event={e} />
+                  <ScheduleItem key={e.id} event={e} onPressDetail={openDetail}/>
                 ))}
               </View>
             </>

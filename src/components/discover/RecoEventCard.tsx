@@ -2,7 +2,6 @@
 import { ArrowUpRight, Clock, MapPin } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { useTheme } from '@/hooks/use-theme';
 import type { RecoEvent, RecoEventStatus } from '@/types/recommendation';
 
 const STATUS: Record<RecoEventStatus, { label: string; dot: string }> = {
@@ -16,11 +15,10 @@ type Props = {
 };
 
 export default function RecoEventCard({ event, onPress }: Props) {
-  const theme = useTheme();
   const status = STATUS[event.status];
 
   return (
-    <Pressable style={[styles.card, { backgroundColor: theme.background }]} onPress={() => onPress(event)}>
+    <Pressable style={styles.card} onPress={() => onPress(event)}>
       <View style={[styles.banner, { backgroundColor: event.bannerColor }]}>
         <View style={styles.deco} />
         <View style={styles.top}>
@@ -49,14 +47,14 @@ export default function RecoEventCard({ event, onPress }: Props) {
         </View>
 
         <View style={styles.body}>
-          <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+          <Text style={styles.name} numberOfLines={1}>
             {event.name}
           </Text>
           <View style={styles.metaRow}>
             <Clock size={12} color="#F97316" />
-            <Text style={[styles.metaText, { color: theme.textSecondary }]}>{event.time}</Text>
+            <Text style={styles.metaText}>{event.time}</Text>
             <MapPin size={12} color="#F97316" />
-            <Text style={[styles.metaText, styles.venue, { color: theme.textSecondary }]} numberOfLines={1}>
+            <Text style={[styles.metaText, styles.venue]} numberOfLines={1}>
               {event.venue}
             </Text>
           </View>
@@ -75,6 +73,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     overflow: 'hidden',
+    backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
@@ -121,9 +120,9 @@ const styles = StyleSheet.create({
   day: { fontSize: 20, fontWeight: '800', lineHeight: 22 },
   month: { fontSize: 7.5, fontWeight: '800', marginTop: 2 },
   body: { flex: 1 },
-  name: { fontSize: 14, fontWeight: '800' },
+  name: { fontSize: 14, fontWeight: '800', color: '#111827' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
-  metaText: { fontSize: 10.5 },
+  metaText: { fontSize: 10.5, color: '#4B5563' },
   venue: { flexShrink: 1 },
   detail: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   detailText: { fontSize: 11.5, fontWeight: '800', color: '#F97316' },
