@@ -80,9 +80,9 @@ export default function ScanScreen() {
 
   return (
     <ScreenLayout title="Quét QR">
-      <View style={styles.campus}>
+      {/* <View style={styles.campus}>
         <CampusLabel />
-      </View>
+      </View> */}
 
       <ScannerPanel
         active={focused}

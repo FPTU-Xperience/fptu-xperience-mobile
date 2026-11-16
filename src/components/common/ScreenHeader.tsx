@@ -17,7 +17,7 @@ type Props = {
 export default function ScreenHeader({ campus, eyebrow, title, subtitle, right }: Props) {
   return (
     <View style={styles.wrap}>
-      <CampusLabel campus={campus} />
+      {/* <CampusLabel campus={campus} /> */}
 
       {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
 

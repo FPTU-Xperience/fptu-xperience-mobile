@@ -9,7 +9,6 @@ import ScreenLayout from '@/components/common/ScreenLayout';
 import SearchBar from '@/components/common/SearchBar';
 import DiscoverSectionTitle from '@/components/discover/DiscoverSectionTitle';
 import HeroCard from '@/components/discover/HeroCard';
-import MoreCommunityCard from '@/components/discover/MoreCommunityCard';
 import Pagination from '@/components/discover/Pagination';
 import RecoClubCard from '@/components/discover/RecoClubCard';
 import RecoEventCard from '@/components/discover/RecoEventCard';
@@ -144,8 +143,6 @@ export default function ExploreScreen() {
           pageCount={data.clubs.pagination.pageCount}
           onChange={setPage}
         />
-
-        <MoreCommunityCard data={data.moreCta} onPress={() => router.navigate('/allClubs')} />
       </View>
     </ScreenLayout>
   );

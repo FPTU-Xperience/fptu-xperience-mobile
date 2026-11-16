@@ -41,8 +41,8 @@ export default function MyClubsScreen() {
   );
 
   return (
-    <ScreenLayout title="Câu lạc bộ của tôi">
-      <MyClubsHeader onExplore={() => router.navigate('/allClubs')} />
+    <ScreenLayout title="Đơn của tôi">
+      {/* <MyClubsHeader onExplore={() => router.navigate('/allClubs')} /> */}
 
         {hasError && error ? (
           <ErrorState message={error} onRetry={retry} loading={loading} />
@@ -50,7 +50,7 @@ export default function MyClubsScreen() {
           <ActivityIndicator color="#F97316" style={styles.loader} />
         ) : (
           <>
-            {feed.clubs.map((club) => (
+            {/* {feed.clubs.map((club) => (
               <MyClubCard
                 key={club.id}
                 club={club}
@@ -63,7 +63,7 @@ export default function MyClubsScreen() {
             ))}
             {feed.clubs.length === 0 && (
               <Text style={styles.empty}>Bạn chưa tham gia câu lạc bộ nào</Text>
-            )}
+            )} */}
 
             <ApplicationsCard
               applications={feed.applications}

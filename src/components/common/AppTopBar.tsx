@@ -1,11 +1,13 @@
 // components/common/AppTopBar.tsx
 import { usePathname, useRouter } from 'expo-router';
 import { Bell, ScanQrCode } from 'lucide-react-native';
+import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '@/providers/AuthProvider';
 import { fetchUnreadCount } from '@/services/notifications';
+import { fetchSelfProfile } from '@/services/profile';
 
 type Props = { title: string };
 
@@ -13,6 +15,25 @@ export default function AppTopBar({ title }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+
+    let cancelled = false;
+
+    fetchSelfProfile()
+      .then((profile) => {
+        if (!cancelled) setAvatarUrl(profile?.profile.avatarUrl ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setAvatarUrl(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   // Số thông báo chưa đọc — badge chỉ hiện khi > 0 (trước đây là chấm cứng).
   const [unread, setUnread] = useState(0);
@@ -77,7 +98,16 @@ export default function AppTopBar({ title }: Props) {
           hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel="Mở hồ sơ cá nhân">
-          <Text style={styles.avatarText}>{user?.initials ?? '--'}</Text>
+          {avatarUrl ? (
+            <Image
+              source={{ uri: avatarUrl }}
+              style={styles.avatarImage}
+              contentFit="cover"
+              transition={200}
+            />
+          ) : (
+            <Text style={styles.avatarText}>{user?.initials ?? '--'}</Text>
+          )}
         </Pressable>
       </View>
     </View>
@@ -150,6 +180,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#C2410C',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   avatarText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  avatarImage: { width: '100%', height: '100%' },
 });

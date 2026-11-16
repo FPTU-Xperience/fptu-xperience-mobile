@@ -17,6 +17,7 @@ import {
 } from 'react';
 
 import { loginWithEmail, loginWithGoogle, logout, refreshAccessToken } from '@/services/auth';
+import { fetchSelfProfile } from '@/services/profile';
 import { getAccessToken, setAuthFailureHandler, setRefreshHandler } from '@/services/apiClient';
 import type { AuthStatus, AuthUser, Session } from '@/types/auth';
 

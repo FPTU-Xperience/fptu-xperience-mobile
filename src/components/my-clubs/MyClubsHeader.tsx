@@ -7,7 +7,6 @@ type Props = { onExplore: () => void };
 export default function MyClubsHeader({ onExplore }: Props) {
   return (
     <View style={styles.wrap}>
-      <Text style={styles.eyebrow}>KHÔNG GIAN CỦA BẠN</Text>
 
       <View style={styles.row}>
         <Text style={styles.title}>Câu lạc bộ của tôi</Text>

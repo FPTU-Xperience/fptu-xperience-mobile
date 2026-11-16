@@ -36,7 +36,7 @@ export default function ScheduleScreen() {
     <ScreenLayout title="Lịch Trình">
       <ScreenHeader
         campus={feed?.campus}
-        eyebrow="KHÔNG GIAN CỦA BẠN"
+        // eyebrow="KHÔNG GIAN CỦA BẠN"
         title="Lịch trình của tôi"
       // subtitle="Theo dõi các hoạt động, buổi sinh hoạt và workshop bạn đã đăng ký tham gia."
       />

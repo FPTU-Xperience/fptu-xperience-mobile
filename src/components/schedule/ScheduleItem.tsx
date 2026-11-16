@@ -46,12 +46,12 @@ export default function ScheduleItem({ event, onPressDetail }: Props) {
               <Clock size={12} color="#F97316" />
               <Text style={styles.metaText}>{event.time}</Text>
             </View>
-            <View style={styles.metaItem}>
+            {/* <View style={styles.metaItem}>
               <MapPin size={12} color="#F97316" />
-              {/* <Text style={styles.metaText} numberOfLines={1}>
+              <Text style={styles.metaText} numberOfLines={1}>
                 {event.venue}
-              </Text> */}
-            </View>
+              </Text>
+            </View> */}
           </View>
         </View>
       </View>

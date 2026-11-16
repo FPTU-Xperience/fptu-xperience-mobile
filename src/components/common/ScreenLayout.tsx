@@ -21,7 +21,7 @@ export default function ScreenLayout({ title, children }: Props) {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
         {children}
-        <Text style={styles.footerNote}>clubhub. – Một phần của hành trình FPTU Xperience</Text>
+        {/* <Text style={styles.footerNote}>clubhub. – Một phần của hành trình FPTU Xperience</Text> */}
       </ScrollView>
     </SafeAreaView>
   );

@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   eyebrowText: { color: '#fff', fontSize: 9.5, fontWeight: '800', letterSpacing: 0.6 },
 
   title: { color: '#fff', fontSize: 30, fontWeight: '800', lineHeight: 36, marginTop: 16 },
-  highlight: { color: '#3B1A06', fontSize: 30, fontWeight: '800', lineHeight: 36 },
+  highlight: { color: '#ffffff', fontSize: 30, fontWeight: '800', lineHeight: 36 },
   desc: { color: '#FFF1E6', fontSize: 13, lineHeight: 19, marginTop: 10 },
 
   buttons: { flexDirection: 'row', gap: 10, marginTop: 16 },
