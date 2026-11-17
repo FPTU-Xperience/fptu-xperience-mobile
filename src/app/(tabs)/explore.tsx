@@ -151,7 +151,7 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   loader: { marginTop: 60 },
   dim: { opacity: 0.6 },
-  list: { paddingHorizontal: 16, gap: 16, marginTop: 14 },
+  list: { paddingHorizontal: 22, gap: 22, marginTop: 14 },
   clubList: { gap: 18 },
   empty: { textAlign: 'center', color: '#9CA3AF', marginTop: 20 },
 });

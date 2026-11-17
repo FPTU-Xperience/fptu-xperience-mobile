@@ -90,30 +90,41 @@ function toActivityEvent(item: StudentActivityItem): ActivityEvent {
 }
 
 /**
- * GET /api/v2/activities/feed
+ * GET /api/v2/activities/feed — phân trang theo page (1-based), khớp API.
  * @param keyword từ khoá tìm kiếm (title/description)
  * @param filter all | upcoming | ongoing
+ * @param cursor số trang (1-based); null = trang đầu.
+ * @param limit số hoạt động mỗi trang (pageSize); bỏ trống = 10.
  */
 export async function fetchActivities(params: {
   keyword?: string;
   filter?: FilterKey;
+  cursor?: string | number | null;
+  limit?: number;
 } = {}): Promise<ActivityFeed> {
-  const { keyword = '', filter = 'all' } = params;
+  const { keyword = '', filter = 'all', cursor = null, limit } = params;
+  const pageSize = limit ?? 10;
+  const page = cursor === null ? 1 : Number(cursor);
+
   const query = toQuery({
     search: keyword.trim() || null,
     status: statusForFilter(filter),
-    page: 1,
-    pageSize: 50,
+    page,
+    pageSize,
   });
 
-  const page = await apiFetch<StudentActivityPage>(`/api/v2/activities/feed${query}`);
+  const data = await apiFetch<StudentActivityPage>(`/api/v2/activities/feed${query}`);
+  const totalPages = data.totalPages ?? 1;
 
   return {
     campus: CAMPUS_FALLBACK,
     // Semester không nằm ở cấp page → lấy từ item đầu tiên nếu có.
-    semester: page.items?.[0]?.semesterId ?? '',
-    events: (page.items ?? []).map(toActivityEvent),
+    semester: data.items?.[0]?.semesterId ?? '',
+    events: (data.items ?? []).map(toActivityEvent),
     filters: FILTERS,
+    total: data.totalItems ?? (data.items?.length ?? 0),
+    // Còn trang tiếp theo → cuộn; không thì null (đã hết).
+    nextCursor: page < totalPages ? page + 1 : null,
   };
 }
 

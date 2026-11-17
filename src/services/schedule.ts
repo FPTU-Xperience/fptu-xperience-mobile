@@ -2,11 +2,9 @@
 //
 // Nguồn dữ liệu thật cho màn Lịch trình.
 //
-// - Sắp diễn ra: GET /api/v2/activities/feed?status=UPCOMING&pageSize=30
-//
-// Chia 2 nhóm theo thời gian bắt đầu:
-//   - upcomingThisWeek: trong 7 ngày tới
-//   - upcomingNextWeek: ngày thứ 8 → 30
+// - Sắp diễn ra: GET /api/v2/activities/feed?status=UPCOMING&pageSize=
+//   (phân trang theo page, API trả sắp theo thời gian bắt đầu)
+// - Đang diễn ra: GET /api/v2/activities/feed?status=LIVE (giới hạn hiển thị)
 //
 // `attended` để rỗng trong phase này: chưa có nguồn API liệt kê lịch sử điểm danh
 // xuyên suốt các hoạt động (my-attendance là per-activity). UI hiện empty state,
@@ -19,9 +17,8 @@ import type { StudentActivityItem, StudentActivityPage } from '@/types/api';
 
 const CAMPUS_FALLBACK = 'FPTU HÀ NỘI - HOLA';
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-const WEEK_MS = 7 * DAY_MS;
-const HORIZON_MS = 30 * DAY_MS;
+/** Số hoạt động "đang diễn ra" tối đa hiển thị (LIVE không cần cuộn dài). */
+const LIVE_LIMIT = 5;
 
 /** Thứ trong tuần (vi) — dùng cho nhãn "TH 11" (ngày). */
 const WEEKDAY_VN = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -53,30 +50,63 @@ function toScheduleEvent(item: StudentActivityItem): ScheduleEvent {
   };
 }
 
-/** GET /api/v2/activities/feed?status=UPCOMING */
-export async function fetchSchedule(campus = ''): Promise<ScheduleFeed> {
-  const query = toQuery({ status: 'UPCOMING', page: 1, pageSize: 30 });
-  const page = await apiFetch<StudentActivityPage>(
-    `/api/v2/activities/feed${query}`,
-  );
+/** Item LIVE → ScheduleEvent: status 'live' (đang diễn ra, sẵn sàng check-in). */
+function toLiveEvent(item: StudentActivityItem): ScheduleEvent {
+  return {
+    ...toScheduleEvent(item),
+    status: 'live',
+    action: 'qr',
+  };
+}
 
+/**
+ * GET /api/v2/activities/feed — màn Lịch trình (tab "Sắp tới").
+ *
+ * @param cursor số trang (1-based); null = trang đầu.
+ * @param limit số hoạt động mỗi trang (pageSize); bỏ trống = 10.
+ *
+ * "Đang diễn ra" (LIVE) không phân trang: chỉ trang đầu mới tải, giới hạn
+ * LIVE_LIMIT item — hoạt động LIVE thay đổi liên tục nên không cần cuộn dài.
+ * LIVE lỗi không làm hỏng "sắp tới" (`.catch` riêng).
+ */
+export async function fetchSchedule(params: {
+  campus?: string;
+  cursor?: string | number | null;
+  limit?: number;
+} = {}): Promise<ScheduleFeed> {
+  const { campus = '', cursor = null, limit } = params;
+  const pageSize = limit ?? 10;
+  const page = cursor === null ? 1 : Number(cursor);
+
+  const [upcomingPage, livePage] = await Promise.all([
+    apiFetch<StudentActivityPage>(
+      `/api/v2/activities/feed${toQuery({ status: 'UPCOMING', page, pageSize })}`,
+    ),
+    page === 1
+      ? apiFetch<StudentActivityPage>(
+          `/api/v2/activities/feed${toQuery({ status: 'LIVE', page: 1, pageSize: LIVE_LIMIT })}`,
+        ).catch(() => ({ items: [] as StudentActivityItem[] }))
+      : Promise.resolve(null),
+  ]);
+
+  // API trả sắp theo giờ bắt đầu; bỏ qua item đã bắt đầu (khung giờ trôi qua).
   const now = Date.now();
-  const thisWeek: ScheduleEvent[] = [];
-  const nextWeek: ScheduleEvent[] = [];
+  const upcomingThisWeek = (upcomingPage.items ?? [])
+    .filter((item) => new Date(item.startTime).getTime() > now)
+    .map(toScheduleEvent);
 
-  for (const item of page.items ?? []) {
-    const start = new Date(item.startTime).getTime();
-    const diff = start - now;
-    if (diff < 0) continue; // đã qua → không hiện ở "sắp tới"
+  // LIVE: giữ nguyên thứ tự API trả (đang diễn ra). Trang đầu mới có.
+  const live = livePage ? (livePage.items ?? []).map(toLiveEvent) : [];
 
-    if (diff <= WEEK_MS) thisWeek.push(toScheduleEvent(item));
-    else if (diff <= HORIZON_MS) nextWeek.push(toScheduleEvent(item));
-  }
+  const totalPages = upcomingPage.totalPages ?? 1;
 
   return {
     campus: campus || CAMPUS_FALLBACK,
-    upcomingThisWeek: thisWeek,
-    upcomingNextWeek: nextWeek,
+    upcomingThisWeek,
+    live,
     attended: [],
+    total: upcomingPage.totalItems ?? upcomingThisWeek.length,
+    // Còn trang tiếp theo → cuộn; không thì null (đã hết).
+    nextCursor: page < totalPages ? page + 1 : null,
   };
 }

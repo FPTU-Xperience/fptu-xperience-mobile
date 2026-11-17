@@ -125,12 +125,12 @@ const styles = StyleSheet.create({
   },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
   logo: {
-    width: 44,
-    height: 44,
+    width: 26,
+    height: 26,
     borderRadius: 10,
     backgroundColor: '#fff',
   },
-  brandText: { fontWeight: '800', fontSize: 26, color: '#111827', letterSpacing: -0.5 },
+  brandText: { fontWeight: '800', fontSize: 20, color: '#111827', letterSpacing: -0.5 },
   brandDot: { color: '#F97316' },
   title: { fontWeight: '700', fontSize: 16, color: '#111827' },
   right: {

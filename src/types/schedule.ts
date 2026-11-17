@@ -1,6 +1,6 @@
 // types/schedule.ts
-export type ScheduleTabKey = 'upcoming' | 'attended';
-export type TicketStatus = 'confirmed' | 'pending' | 'attended';
+export type ScheduleTabKey = 'upcoming' | 'live' | 'attended';
+export type TicketStatus = 'confirmed' | 'pending' | 'live' | 'attended';
 export type TicketAction = 'qr' | 'ticket';
 
 export interface ScheduleEvent {
@@ -21,7 +21,13 @@ export interface ScheduleEvent {
 
 export interface ScheduleFeed {
   campus: string;
+  /** "Sắp tới" — danh sách phẳng, cuộn vô hạn (API sắp theo giờ bắt đầu). */
   upcomingThisWeek: ScheduleEvent[];
-  upcomingNextWeek: ScheduleEvent[];
+  /** Hoạt động đang diễn ra (LIVE) — có source API riêng (chỉ trang đầu). */
+  live: ScheduleEvent[];
   attended: ScheduleEvent[];
+  /** Tổng số hoạt động sắp tới (từ API). */
+  total?: number;
+  /** Số trang tiếp theo cho cuộn vô hạn; null = đã hết. */
+  nextCursor?: string | number | null;
 }

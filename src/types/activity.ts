@@ -35,9 +35,17 @@ export interface ActivityFeed {
   semester: string;
   events: ActivityEvent[];
   filters: ActivityFilter[];
+  /** Tổng số hoạt động khớp bộ lọc (từ API). */
+  total?: number;
+  /** Offset tiếp theo cho cuộn vô hạn; null = đã hết. */
+  nextCursor?: string | number | null;
 }
 
 export interface FetchActivitiesParams {
   keyword?: string;
   filter?: FilterKey;
+  /** Vị trí bắt đầu trang (null = trang đầu). */
+  cursor?: string | number | null;
+  /** Số hoạt động mỗi trang (bỏ trống = tất cả). */
+  limit?: number;
 }

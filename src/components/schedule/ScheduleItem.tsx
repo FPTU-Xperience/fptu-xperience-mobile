@@ -7,6 +7,7 @@ import type { ScheduleEvent, TicketStatus } from '@/types/schedule';
 const STATUS: Record<TicketStatus, { label: string; bg: string; color: string }> = {
   confirmed: { label: 'Đã xác nhận vé', bg: '#CDEFFA', color: '#0E7490' },
   pending: { label: 'Chờ check-in', bg: '#FFE4D6', color: '#C2410C' },
+  live: { label: 'Đang diễn ra', bg: '#DCFCE7', color: '#15803D' },
   attended: { label: 'Đã tham gia', bg: '#DCFCE7', color: '#15803D' },
 };
 
