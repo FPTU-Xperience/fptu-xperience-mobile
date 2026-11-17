@@ -8,6 +8,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@/providers/AuthProvider';
 import { fetchUnreadCount } from '@/services/notifications';
 import { fetchSelfProfile } from '@/services/profile';
+import logoUrl from '@/assets/fptux.png';
 
 type Props = { title: string };
 
@@ -60,10 +61,10 @@ export default function AppTopBar({ title }: Props) {
   return (
     <View style={styles.row}>
       <View style={styles.brand}>
-        <View style={styles.logo}>
-          <Text style={styles.logoText}>F</Text>
-        </View>
-        <Text style={styles.brandText}>clubhub.</Text>
+        <Image source={logoUrl} style={styles.logo} contentFit="contain" />
+        <Text style={styles.brandText}>
+          Clubhub<Text style={styles.brandDot}>.</Text>
+        </Text>
       </View>
 
       <Text style={styles.title}>{title}</Text>
@@ -124,15 +125,13 @@ const styles = StyleSheet.create({
   },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
   logo: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    backgroundColor: '#F97316',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: '#fff',
   },
-  logoText: { color: '#fff', fontWeight: '800', fontSize: 13 },
-  brandText: { fontWeight: '700', fontSize: 14, color: '#111827' },
+  brandText: { fontWeight: '800', fontSize: 26, color: '#111827', letterSpacing: -0.5 },
+  brandDot: { color: '#F97316' },
   title: { fontWeight: '700', fontSize: 16, color: '#111827' },
   right: {
     flex: 1,

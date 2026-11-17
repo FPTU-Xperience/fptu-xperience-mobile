@@ -1,15 +1,12 @@
 module.exports = {
   expo: {
-    name: "fptu-xperience-mobile",
+    name: "Club Hub",
     slug: "fptu-xperience-mobile",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "fptuxperiencemobile",
     userInterfaceStyle: "automatic",
-    ios: {
-      icon: "./assets/expo.icon"
-    },
     android: {
       package: "vn.fptu.xperience.mobile",
       adaptiveIcon: {
@@ -35,9 +32,9 @@ module.exports = {
       [
         "expo-splash-screen",
         {
-          backgroundColor: "#208AEF",
+          backgroundColor: "#FFFFFF",
           image: "./assets/images/splash-icon.png",
-          imageWidth: 76
+          imageWidth: 220
         }
       ],
       [
