@@ -28,6 +28,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Verify Google client ID injected
+        run: |
+          # Không in GIÁ TRỊ (secret) — chỉ hiện có/đủ không + độ dài, để log CI
+          # tự nói được client ID đã được nạp từ secrets vào build chưa.
+          if [ -n "${EXPO_PUBLIC_GOOGLE_CLIENT_ID}" ]; then
+            echo "EXPO_PUBLIC_GOOGLE_CLIENT_ID: present (length=${#EXPO_PUBLIC_GOOGLE_CLIENT_ID}, ends ...${EXPO_PUBLIC_GOOGLE_CLIENT_ID: -30})"
+          else
+            echo "::error::EXPO_PUBLIC_GOOGLE_CLIENT_ID is EMPTY — secret CLUBHUB_GOOGLE_CLIENT_ID chưa được định nghĩa (repo/org settings → Secrets & variables → Actions). Build sẽ thiếu Google Sign-In."
+            exit 1
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:

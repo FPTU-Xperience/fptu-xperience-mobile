@@ -19,6 +19,10 @@ export default function LoginScreen() {
   const [emailError, setEmailError] = useState<string | null>(null);
 
   const noToken = status === 'unauthenticated';
+  // Google Sign-In đã được build vào APK chưa? (EXPO_PUBLIC_* inline lúc build).
+  // Chỉ hiện notice "chưa có Google client ID" khi THẬT SỰ thiếu client ID — tránh
+  // cảnh báo sai trong build đã nạp sẵn EXPO_PUBLIC_GOOGLE_CLIENT_ID (qua CI secret).
+  const hasGoogleClientId = Boolean(process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID?.trim());
 
   const handleGoogle = async () => {
     if (loading) return;
@@ -60,7 +64,7 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}>
         <BrandHeader />
         <PromoCard />
-        {noToken ? <DevTokenNotice /> : null}
+        {noToken && !hasGoogleClientId ? <DevTokenNotice /> : null}
         <EmailLoginForm
           onSubmit={handleEmail}
           loading={emailLoading}
@@ -119,8 +123,10 @@ function DevTokenNotice() {
       <Text style={styles.noticeText}>
         <Text style={styles.noticeTitle}>Chưa có Google client ID. </Text>
         Bạn có thể đăng nhập ngay bằng email/mật khẩu phía trên. Muốn dùng Google,
-        đặt <Text style={styles.noticeCode}>EXPO_PUBLIC_GOOGLE_CLIENT_ID</Text> (Web client ID)
-        trong .env rồi build lại app.
+        nạp <Text style={styles.noticeCode}>EXPO_PUBLIC_GOOGLE_CLIENT_ID</Text> (Web client
+        ID, cùng giá trị BE dùng) vào build — trong CI đặt secret{' '}
+        <Text style={styles.noticeCode}>CLUBHUB_GOOGLE_CLIENT_ID</Text> rồi build lại bằng
+        workflow Build Debug APK.
       </Text>
     </View>
   );
