@@ -27,6 +27,7 @@
 // Yêu cầu build: development build / standalone APK (native code — không chạy được Expo Go).
 
 import type { OneTapResponse } from 'react-native-nitro-google-signin';
+import { addGoogleDebugEvent } from '@/services/googleDebug';
 
 type NitroGoogleSignInModule = typeof import('react-native-nitro-google-signin');
 
@@ -73,6 +74,9 @@ export async function promptGoogleSignIn(): Promise<string> {
   let response: OneTapResponse;
   try {
     response = await GoogleOneTapSignIn.signIn();
+    // DEBUG: ghi type response (success | noSavedCredentialFound | cancelled)
+    // để DebugPopup phân biệt One-Tap im lặng vs success mà thiếu token.
+    addGoogleDebugEvent('info', `One-Tap response: type=${response.type}${response.data ? `, user=${response.data.user.email ?? response.data.user.id}` : ''}`);
   } catch (e) {
     if (isErrorWithCode(e)) {
       if (e.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
@@ -99,8 +103,35 @@ export async function promptGoogleSignIn(): Promise<string> {
     throw new GoogleSignInFailure('Bạn đã hủy đăng nhập Google.', statusCodes.SIGN_IN_CANCELLED);
   }
 
+  // Credential Manager "One Tap" chỉ SILENT khi máy NAY có sẵn credential đã
+  // lưu cho app (đăng nhập Google 1 lần trước đó). Lần đầu / máy chưa lưu
+  // → type='noSavedCredentialFound' (KHÔNG phải lỗi) → phải mở UI CHỌN
+  // TÀI KHOẢN RÕ (explicit) qua presentExplicitSignIn(). Không xử lý bước
+  // này → user bấm Google → "không hiện gì" → quay lại login (lỗi bạn gặp).
   if (!isSuccessResponse(response)) {
-    throw new GoogleSignInFailure('Google không trả về ID token.', 'NO_ID_TOKEN');
+    addGoogleDebugEvent('info', 'One-Tap im lặng (noSavedCredentialFound) → mở UI chọn tài khoản (explicit)');
+    let explicit: OneTapResponse;
+    try {
+      explicit = await GoogleOneTapSignIn.presentExplicitSignIn();
+      addGoogleDebugEvent('info', `Explicit sign-in response: type=${explicit.type}${explicit.data ? `, user=${explicit.data.user.email ?? explicit.data.user.id}` : ''}`);
+    } catch (e) {
+      if (isErrorWithCode(e)) {
+        throw new GoogleSignInFailure(e.message, e.code);
+      }
+      throw new GoogleSignInFailure(
+        e instanceof Error && e.message ? e.message : 'Đăng nhập Google thất bại.',
+        'UNKNOWN',
+      );
+    }
+    if (isCancelledResponse(explicit)) {
+      throw new GoogleSignInFailure('Bạn đã hủy đăng nhập Google.', statusCodes.SIGN_IN_CANCELLED);
+    }
+    if (!isSuccessResponse(explicit)) {
+      // Explicit trả noSavedCredentialFound = user không chọn tài khoản nào
+      // (đóng UI) → coi như cancel, không phải "Google không trả token".
+      throw new GoogleSignInFailure('Không chọn được tài khoản Google.', 'NO_ACCOUNT_SELECTED');
+    }
+    return explicit.data.idToken;
   }
   return response.data.idToken;
 }
