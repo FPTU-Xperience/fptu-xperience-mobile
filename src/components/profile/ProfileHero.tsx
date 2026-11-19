@@ -25,7 +25,8 @@ export default function ProfileHero({
 }: Props) {
   return (
     <View>
-      {/* Ảnh bìa — ảnh thật nếu có, không thì fallback màu + coverText */}
+      {/* Ảnh bìa — ảnh thật phủ TRÀN box nếu có (web: :has(canvas) → padding: 0);
+          không thì fallback màu + coverText (giữ padding để text nằm gọn). */}
       <View style={styles.cover}>
         {user.coverImageUrl ? (
           <Image
@@ -35,7 +36,9 @@ export default function ProfileHero({
             transition={200}
           />
         ) : (
-          <Text style={styles.coverText}>{user.coverText}</Text>
+          <View style={styles.coverTextWrap}>
+            <Text style={styles.coverText}>{user.coverText}</Text>
+          </View>
         )}
         <Pressable style={styles.coverButton} onPress={onChangeCover}>
           <ImageIcon size={12} color="#6B7280" />
@@ -107,10 +110,13 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 20,
     backgroundColor: '#FDE7CF',
-    padding: 16,
-    justifyContent: 'center',
+    // KHÔNG padding: khi có ảnh bìa, ảnh absolute-fill phải phủ TRÀN box
+    // (web: .v2-profile-cover:has(canvas) { padding: 0 }). Padding trước đó
+    // là nguyên nhân ảnh bị "không phủ đầy / lệch một bên".
     overflow: 'hidden',
   },
+  // Fallback (không có ảnh): text vẫn nằm gọn trong khung padding.
+  coverTextWrap: { padding: 16, justifyContent: 'center', height: '100%' },
   coverImage: {
     position: 'absolute',
     top: 0,

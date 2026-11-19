@@ -21,6 +21,7 @@ import {
   ActivityIndicator,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -306,15 +307,19 @@ export default function ProfileImageModal({
             </>
           ) : (
             // Tab "Khung" (6a) — chọn equip khung (không đụng ảnh).
-            <AvatarFramePicker
-              userId={user?.id ?? ''}
-              inventory={inventory}
-              equipped={equippedFrame}
-              onSelect={(id) => onSelectFrame?.(id)}
-              onOpenRewards={() => onOpenRewards?.()}
-              avatarUrl={avatarUrl ?? null}
-              initials={initials}
-            />
+            // Wrap ScrollView: grid khung cao hơn màn → cuộn trong sheet thay vì
+            // tràn ra ngoài (sheet chốt đáy, header ẩn ngoài màn).
+            <ScrollView style={styles.frameScroll} contentContainerStyle={styles.frameScrollContent}>
+              <AvatarFramePicker
+                userId={user?.id ?? ''}
+                inventory={inventory}
+                equipped={equippedFrame}
+                onSelect={(id) => onSelectFrame?.(id)}
+                onOpenRewards={() => onOpenRewards?.()}
+                avatarUrl={avatarUrl ?? null}
+                initials={initials}
+              />
+            </ScrollView>
           )}
         </View>
       </View>
@@ -332,7 +337,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 20,
+    // Chốt cao sheet (grid khung 3 hàng dễ cao hơn màn) — phần nội dung
+    // "Khung" tự cuộn bên trong, header không bao giờ bị tràn ra ngoài.
+    maxHeight: '84%',
   },
+  frameScroll: { flexShrink: 1 },
+  frameScrollContent: { paddingTop: 12 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontSize: 17, fontWeight: '800', color: '#111827' },
   close: {

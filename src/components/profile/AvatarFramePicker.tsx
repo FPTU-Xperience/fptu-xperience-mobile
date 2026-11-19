@@ -9,9 +9,10 @@
 // Preview: overlay SVG (AvatarFrameOverlay) trên nền avatar (màu + initials).
 
 import { Check, Lock } from 'lucide-react-native';
+import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import AvatarFrameOverlay from '@/components/profile/AvatarFrameOverlay';
-import { AVATAR_FRAMES, getFrame, type FrameItem } from '@/components/profile/avatarFrames';
+import { AVATAR_FRAMES, type FrameItem } from '@/components/profile/avatarFrames';
 import type { CosmeticInventoryPage } from '@/types/api';
 import { frameUnlocked } from '@/services/frameState';
 
@@ -83,8 +84,6 @@ type CellProps = {
 };
 
 function FrameCell({ frame, unlocked, equipped, avatarUrl, initials, onPress, onOpenRewards }: CellProps) {
-  const previewId = unlocked ? frame.id : 'none'; // khóa → preview không khung
-  const preview = getFrame(previewId);
   const size = 64;
 
   // Hành vi: free → chọn ngay; rewards đã sở hữu → chọn; khóa → mở Kho quà.
@@ -98,12 +97,23 @@ function FrameCell({ frame, unlocked, equipped, avatarUrl, initials, onPress, on
       style={[styles.cell, equipped && styles.cellEquipped, !unlocked && styles.cellLocked]}
       onPress={handlePress}
       hitSlop={4}>
-      {/* Avatar + overlay khung (khóa thì overlay mờ + lock badge). */}
+      {/* Avatar + overlay khung CHỒNG LÊN nhau (mirror web: wrapper relative,
+          overlay absolute inset -6% để vòng khung nằm ngoài viền trắng).
+          Khoá → vẫn preview khung thật + lock badge (web: "Đang xem thử..."). */}
       <View style={styles.preview}>
-        <View style={styles.avatarBg}>
-          {initials ? <Text style={styles.initials}>{initials}</Text> : null}
+        <View style={styles.avatarWrap}>
+          <View style={styles.avatarBg}>
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.avatarImage} contentFit="cover" />
+            ) : initials ? (
+              <Text style={styles.initials}>{initials}</Text>
+            ) : null}
+          </View>
+          {/* Overlay tuyệt đối, cùng tâm với avatar (frame = avatar + 8px). */}
+          <View style={styles.frameLayer} pointerEvents="none">
+            <AvatarFrameOverlay frame={frame} size={size} />
+          </View>
         </View>
-        <AvatarFrameOverlay frame={preview ?? null} size={size} />
         {!unlocked ? (
           <View style={styles.lockBadge}>
             <Lock size={13} color="#F97316" />
@@ -123,8 +133,8 @@ function FrameCell({ frame, unlocked, equipped, avatarUrl, initials, onPress, on
         {frame.free
           ? 'Miễn phí'
           : unlocked
-            ? 'Đã mở khóa'
-            : `${frame.cost} điểm · ${frame.clubName ?? 'CLB'}`}
+            ? 'Đã sở hữu'
+            : `🔒 ${frame.cost} điểm tại CLB`}
       </Text>
     </Pressable>
   );
@@ -136,7 +146,7 @@ const styles = StyleSheet.create({
   heading: { fontSize: 14, fontWeight: '800', color: '#111827', marginBottom: 12 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   cell: {
-    width: 84,
+    width: 96,
     alignItems: 'center',
     gap: 6,
     padding: 8,
@@ -146,7 +156,22 @@ const styles = StyleSheet.create({
   },
   cellEquipped: { borderColor: '#F97316', backgroundColor: '#FFF7ED' },
   cellLocked: { opacity: 0.85 },
-  preview: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
+  preview: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
+  // Wrapper giữ avatar + overlay tuyệt đối (mirror web: .v2-framed-avatar +
+  // .v2-avatar-frame-overlay absolute). Preview 64px + 8px để vòng khung nằm
+  // ngoài viền (khớp constant size = 64 trong FrameCell).
+  avatarWrap: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
+  // Phải CENTER: SVG 64px nằm trong layer 72px — thiếu center sẽ dính góc
+  // trái-trên và lệch khỏi tâm avatar.
+  frameLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 72,
+    height: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   avatarBg: {
     width: 52,
     height: 52,
@@ -154,7 +179,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#8B3A1F',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
+  avatarImage: { width: '100%', height: '100%' },
   initials: { color: '#fff', fontSize: 18, fontWeight: '800' },
   lockBadge: {
     position: 'absolute',

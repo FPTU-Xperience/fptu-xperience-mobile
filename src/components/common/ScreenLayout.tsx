@@ -1,6 +1,7 @@
 // components/common/ScreenLayout.tsx
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
+import type { ScrollViewInstance } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import AppTopBar from './AppTopBar';
@@ -9,14 +10,17 @@ type Props = {
   /** Tiêu đề hiển thị giữa thanh trên cùng */
   title: string;
   children: ReactNode;
+  /** Tuỳ chọn: ref của ScrollView để cha scroll tới một vị trí (vd đổi trang phân trang). */
+  scrollRef?: RefObject<ScrollViewInstance | null>;
 };
 
 /** Khung chung cho các tab: SafeArea + thanh trên cùng + ScrollView + footer note */
-export default function ScreenLayout({ title, children }: Props) {
+export default function ScreenLayout({ title, children, scrollRef }: Props) {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <AppTopBar title={title} />
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">

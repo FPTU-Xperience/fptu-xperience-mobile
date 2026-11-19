@@ -35,7 +35,14 @@ import type {
 } from '@/types/api';
 
 const CAMPUS_FALLBACK = 'FPTU HÀ NỘI - HOLA';
-const RECO_LIMIT = 6;
+// Số hoạt động gợi ý mỗi lần (endpoint giới hạn tối đa 6).
+const EVENT_LIMIT = 6;
+// Section "Câu lạc bộ dành cho bạn": pool lấy từ API gợi ý
+// /api/v2/recommendations/clubs (backend trả về tối đa 18 CLB), chia đúng
+// 3 trang × 6 CLB. Nếu API trả >18 thì CHỈ GIỮ 18 (3 trang), bỏ phần thừa.
+const CLUBS_PAGE_SIZE = 6;
+const CLUBS_MAX_PAGES = 3;
+const CLUBS_MAX_POOL = CLUBS_PAGE_SIZE * CLUBS_MAX_PAGES; // 18
 
 // ---------------------------------------------------------------------------
 // Copy tĩnh (marketing) — không phải dữ liệu API.
@@ -159,7 +166,7 @@ function toRecoClub(dto: ClubDirectory): RecoClub {
   };
 }
 
-/** StudentClubMetadata (từ recommendation) → RecoClub. */
+/** StudentClubMetadata (từ API gợi ý /recommend) → RecoClub. */
 function toRecoClubFromMeta(meta: {
   clubId: number;
   clubCode: string;
@@ -207,7 +214,7 @@ async function fetchRecoEvents(query: RecommendationQuery): Promise<RecoEvent[]>
   // 1) Thử endpoint gợi ý.
   try {
     const params = toQuery({
-      limit: RECO_LIMIT,
+      limit: EVENT_LIMIT,
       scope: 'PERIOD',
       semesterId: null,
     });
@@ -233,7 +240,7 @@ async function fetchRecoEvents(query: RecommendationQuery): Promise<RecoEvent[]>
     status: statusFilter,
     search: query.keyword?.trim() || null,
     page: 1,
-    pageSize: RECO_LIMIT,
+    pageSize: EVENT_LIMIT,
   });
   const page = await apiFetch<StudentActivityPage>(
     `/api/v2/activities/feed${feedQuery}`,
@@ -241,59 +248,107 @@ async function fetchRecoEvents(query: RecommendationQuery): Promise<RecoEvent[]>
   return (page.items ?? []).map(toRecoEvent);
 }
 
-/** CLB gợi ý; fallback sang danh sách CLB thật khi endpoint gợi ý không khả dụng. */
-async function fetchRecoClubs(query: RecommendationQuery): Promise<RecoClub[]> {
+/**
+ * Pool CLB gợi ý (đã lọc theo từ khoá + danh mục, CHẶN ở CLUBS_MAX_POOL) để
+ * phân trang phía client.
+ *
+ * Nguồn chính: API gợi ý riêng /api/v2/recommendations/clubs (trả về tối đa
+ * 18 CLB). Nếu API gợi ý không khả dụng (available:false / lỗi), fallback sang
+ * DANH LỤC CLB thật (GET /api/clubs) để người dùng vẫn thấy nội dung thật.
+ * Dù nguồn trả bao nhiêu, pool luôn bị cắt ở CLUBS_MAX_POOL (18) để phân trang
+ * đúng 3 trang × 6 CLB (thừa thì bỏ).
+ */
+async function loadAllClubs(query: RecommendationQuery): Promise<RecoClub[]> {
+  const keyword = query.keyword?.trim() || null;
+  const matchesKeyword = (c: RecoClub) =>
+    !keyword ||
+    c.name.toLowerCase().includes(keyword.toLowerCase()) ||
+    c.code.toLowerCase().includes(keyword.toLowerCase());
+  const matchesCategory = (c: RecoClub) =>
+    query.category === 'all' || c.category === query.category;
+
+  // 1) Nguồn chính: API gợi ý CLB riêng.
   try {
-    const params = toQuery({ limit: RECO_LIMIT, scope: 'PERIOD' });
+    const params = toQuery({ limit: CLUBS_MAX_POOL, scope: 'PERIOD' });
     const rec = await apiFetch<RecommendedClubsResponse>(
       `/api/v2/recommendations/clubs${params}`,
     );
-
     if (rec.available && rec.items?.length) {
-      return rec.items.map((r) => toRecoClubFromMeta(r.club));
+      const items = rec.items
+        .map((r) => toRecoClubFromMeta(r.club))
+        .filter((c) => matchesKeyword(c) && matchesCategory(c));
+      if (items.length) return items.slice(0, CLUBS_MAX_POOL);
     }
   } catch {
     // Rơi xuống danh sách CLB thật bên dưới.
   }
 
-  const listQuery = toQuery({
-    active: true,
-    recruiting: true,
-    search: query.keyword?.trim() || null,
-  });
+  // 2) Fallback: danh sách CLB thật (toàn bộ active), cắt ở CLUBS_MAX_POOL.
+  const listQuery = toQuery({ active: true, search: keyword });
   const list = await apiFetch<ClubDirectory[]>(`/api/clubs${listQuery}`);
-  return list.slice(0, RECO_LIMIT).map(toRecoClub);
+  return (list ?? [])
+    .map(toRecoClub)
+    .filter((c) => matchesKeyword(c) && matchesCategory(c))
+    .slice(0, CLUBS_MAX_POOL);
 }
 
 /**
- * GET dữ liệu cho màn Khám phá.
- * @param eventStatus all | upcoming | ongoing
- * @param keyword từ khoá lọc chung
- * @param category all | tech | community | academic
- * @param page trang hiện tại (dùng cho phân trang CLB)
+ * CLB, phân trang phía client: đúng CLUBS_MAX_PAGES trang, CLUBS_PAGE_SIZE CLB/trang.
+ * Pool đã bị chặn ở CLUBS_MAX_POOL (18) trong loadAllClubs → pageCount tối đa 3.
  */
-export async function fetchRecommendation(
+async function fetchRecoClubs(query: RecommendationQuery): Promise<
+  { clubs: RecoClub[]; page: number; total: number; pageCount: number }
+> {
+  const all = await loadAllClubs(query);
+  const pageCount = Math.min(
+    CLUBS_MAX_PAGES,
+    Math.max(1, Math.ceil(all.length / CLUBS_PAGE_SIZE)),
+  );
+  const page = Math.min(Math.max(1, query.page ?? 1), pageCount);
+  const start = (page - 1) * CLUBS_PAGE_SIZE;
+  return {
+    clubs: all.slice(start, start + CLUBS_PAGE_SIZE),
+    page,
+    total: all.length,
+    pageCount,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// API công khai cho màn Khám phá — tách 2 phần để UI chỉ refetch đúng phần đổi:
+//   - fetchRecoBase: hero + events (không phụ thuộc page)
+//   - fetchRecoClubsSection: chỉ section CLB (phân trang) — bấm next/prev
+//     chỉ gọi lại hàm này, phần events trên màn giữ nguyên.
+// ---------------------------------------------------------------------------
+
+/** Phần nền: hero/quickActions/moreCta + hoạt động gợi ý (không phân trang). */
+export async function fetchRecoBase(
   query: RecommendationQuery = {},
-): Promise<RecommendationResponse> {
-  const { page = 1 } = query;
-
-  const [events, clubs] = await Promise.all([
-    fetchRecoEvents(query),
-    fetchRecoClubs(query),
-  ]);
-
-  const pageCount = Math.max(1, Math.ceil(clubs.length / RECO_LIMIT));
-
+): Promise<Pick<RecommendationResponse, 'campus' | 'hero' | 'quickActions' | 'events' | 'moreCta'>> {
+  const events = await fetchRecoEvents(query);
   return {
     campus: CAMPUS_FALLBACK,
     hero: HERO,
     quickActions: QUICK_ACTIONS,
     events: { filters: EVENT_FILTERS, items: events },
-    clubs: {
-      filters: CLUB_FILTERS,
-      items: clubs,
-      pagination: { page, pageCount, total: clubs.length },
-    },
     moreCta: MORE_CTA,
+  };
+}
+
+/** Section "Câu lạc bộ dành cho bạn" (3 trang × 6 CLB, pool từ API gợi ý). */
+export async function fetchRecoClubsSection(
+  query: RecommendationQuery = {},
+): Promise<RecommendationResponse['clubs']> {
+  const clubs = await fetchRecoClubs(query);
+  return {
+    filters: CLUB_FILTERS,
+    items: clubs.clubs,
+    // `clubs.page` đã clamp trong fetchRecoClubs (1..pageCount) — nhất quán
+    // với pageCount để Pagination không bao giờ hiện trang ngoài khoảng.
+    pagination: {
+      page: clubs.page,
+      pageCount: clubs.pageCount,
+      total: clubs.total,
+    },
   };
 }
