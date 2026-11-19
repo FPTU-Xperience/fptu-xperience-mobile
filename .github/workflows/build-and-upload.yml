@@ -20,19 +20,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      # ===== Lưu ý quan trọng về bản dev-client =====
-      # Profile "development" (eas.json) là DEV-CLIENT: build debug variant →
-      # JS bundle KHÔNG được nhúng vào APK. App chỉ chạy được khi kết nối
-      # Metro (npx expo start) → quét QR. Vì vậy EXPO_PUBLIC_* KHÔNG được
-      # inlines lúc build này — chúng lấy từ .env CẢNH LOCAL của người chạy
-      # `expo start`. Các biến dưới đây chỉ dùng cho bước prebuild/native và
-      # để profile "env" trong eas.json không bị ghi đè; không ảnh hưởng JS
-      # runtime của dev-client.
-      #
-      # EXPO_PUBLIC_GOOGLE_CLIENT_ID: cùng secret với web UI + API. Cho dev-client,
-      # giá trị thực sự được nhúng vào JS là từ .env local của dev (phải có cùng
-      # client ID này trong .env local). Giữ ở đây cho đồng bộ + cho bản build
-      # nhúng bundle (profile preview/production).
+      # ===== Lưu ý về profile build =====
+      # Workflow build profile "debugApk" (eas.json) — NON dev-client: JS bundle
+      # ĐƯỢC NHÚNG vào APK, EXPO_PUBLIC_* được inline từ env của CI (bao gồm
+      # secret CLUBHUB_GOOGLE_CLIENT_ID) ⇒ APK tự-chứa, cài lên máy là chạy,
+      # KHÔNG cần Metro.
+      # (Profile "development" là dev-client: JS KHÔNG nhúng, phải kéo từ Metro
+      #  + .env local → secret CI KHÔNG đến được app chạy. Chỉ dùng dev-client
+      #  khi cần dev menu / hot-reload.)
       EXPO_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.CLUBHUB_GOOGLE_CLIENT_ID }}
       EXPO_PUBLIC_API_URL: ${{ inputs.api_base_url || vars.VITE_API_BASE_URL }}
       EXPO_PUBLIC_DEV_ACCESS_TOKEN: ${{ secrets.CLUBHUB_DEV_ACCESS_TOKEN }}
@@ -40,6 +35,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Verify Google client ID injected
+        run: |
+          # Không in GIÁ TRỊ (secret) — chỉ hiện có/đủ không + độ dài, để log CI
+          # tự nói được client ID đã được nạp từ secrets vào build chưa.
+          if [ -n "${EXPO_PUBLIC_GOOGLE_CLIENT_ID}" ]; then
+            echo "EXPO_PUBLIC_GOOGLE_CLIENT_ID: present (length=${#EXPO_PUBLIC_GOOGLE_CLIENT_ID}, ends ...${EXPO_PUBLIC_GOOGLE_CLIENT_ID: -30})"
+          else
+            echo "::error::EXPO_PUBLIC_GOOGLE_CLIENT_ID is EMPTY — secret CLUBHUB_GOOGLE_CLIENT_ID chưa được định nghĩa (repo/org settings → Secrets & variables → Actions)."
+            exit 1
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -85,8 +91,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Bản dev-client: có dev-launcher → mở app hiện màn hình nhập URL Metro
-      # (quét QR) thay vì nhúng JS bundle. Đây là bản dùng để dev.
+      # Bản debugApk (non dev-client): NHÚNG JS bundle vào APK (EXPO_PUBLIC_*
+      # được inline từ env của CI, gồm CLUBHUB_GOOGLE_CLIENT_ID) ⇒ cài lên máy
+      # là chạy, không cần Metro. R2 là phân phối public — DEV-CLIENT không dùng
+      # được ở đây (không nhúng JS, phải quét QR vào server Metro).
       # `--local` build native project TRỰC TIẾP trên runner → cần Android SDK
       # (NDK + CMake) và JDK đã setup ở trên; EAS local build vẫn yêu cầu EXPO_TOKEN
       # để resolve project/credentials (auth).
@@ -94,7 +102,7 @@ jobs:
         run: |
           npx --yes eas-cli build \
             --platform android \
-            --profile development \
+            --profile debugApk \
             --local \
             --non-interactive \
             --output ./app-debug.apk
