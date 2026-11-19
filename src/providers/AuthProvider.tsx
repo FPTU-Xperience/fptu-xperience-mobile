@@ -109,9 +109,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         source: 'google',
       } as unknown as Session);
       setStatus('authenticated');
-    } catch {
-      // Giữ nguyên trạng thái (unauthenticated nếu chưa có dev token)
+    } catch (e) {
+      // Giữ nguyên trạng thái (unauthenticated nếu chưa có dev token) — nhưng
+      // PHẢI re-throw để UI (login.tsx) Alert được nguyên nhân thật (DEVELOPER_ERROR,
+      // SIGN_IN_CANCELLED, 403 NotAllowlisted...). Catch cũ nuốt lỗi → "không hiện gì".
       setStatus(getAccessToken() ? 'authenticated' : 'unauthenticated');
+      throw e;
     }
   }, []);
 

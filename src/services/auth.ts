@@ -4,6 +4,7 @@
 // → access/refresh token + user → lưu SecureStore (session.ts) + gắn token runtime.
 
 import { ApiError, apiFetch, getApiErrorMessage, setRuntimeToken } from '@/services/apiClient';
+import { addGoogleDebugEvent } from '@/services/googleDebug';
 import { promptGoogleSignIn } from '@/services/googleAuth';
 import { clearSession, loadSession, saveSession, type MobileSession } from '@/services/session';
 
@@ -20,12 +21,17 @@ export class AuthError extends Error {
 
 /** Đăng nhập bằng Google (nút "Đăng nhập bằng Google" trong app). */
 export async function loginWithGoogle(): Promise<MobileSession> {
+  addGoogleDebugEvent('info', 'Bấm Đăng nhập Google (One-Tap)');
   let credential: string;
   try {
     credential = await promptGoogleSignIn();
   } catch (e) {
+    // DEBUG: One-Tap fail — ghi nguyên nhân thật (DEVELOPER_ERROR, CANCELLED, ...)
+    // để DebugPopup trên màn login hiện ra khi user quay lại app.
+    addGoogleDebugEvent('error', `One-Tap thất bại: ${getApiErrorMessage(e)} (code: ${(e as { code?: string }).code ?? '-'})`);
     throw new AuthError(getApiErrorMessage(e));
   }
+  addGoogleDebugEvent('info', 'One-Tap OK — có ID token, đang gọi POST /api/auth/google');
 
   let auth: AuthResponse;
   try {
@@ -35,8 +41,15 @@ export async function loginWithGoogle(): Promise<MobileSession> {
       auth: false, // endpoint public — chưa có token nào
     });
   } catch (e) {
+    // DEBUG: BE từ chối — ghi status + code (vd 403 NotAllowlisted, 401, 503)
+    const detail =
+      e instanceof ApiError
+        ? `HTTP ${e.status} ${e.code ? `code=${e.code}` : ''} :: ${getApiErrorMessage(e)}`
+        : getApiErrorMessage(e);
+    addGoogleDebugEvent('error', `BE /api/auth/google trả lỗi: ${detail}`);
     throw new AuthError(getApiErrorMessage(e));
   }
+  addGoogleDebugEvent('success', `Đăng nhập Google OK — user: ${auth.user.fullName} (${auth.user.email})`);
 
   const session: MobileSession = {
     accessToken: auth.accessToken,

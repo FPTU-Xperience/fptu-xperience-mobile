@@ -6,11 +6,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ALLOWED_DOMAINS, CAMPUSES } from '@/constants/auth';
 import BrandHeader from '@/components/login/BrandHeader';
 import CampusList from '@/components/login/CampusList';
+import DebugPopup from '@/components/login/DebugPopup';
 import EmailLoginForm from '@/components/login/EmailLoginForm';
 import HelpNote from '@/components/login/HelpNote';
 import PromoCard from '@/components/login/PromoCard';
 import SsoSection from '@/components/login/SsoSection';
 import { useAuth } from '@/providers/AuthProvider';
+import { useIsFocused } from 'expo-router';
 
 export default function LoginScreen() {
   const { signIn, signInWithEmail, sessionExpired, status } = useAuth();
@@ -19,6 +21,9 @@ export default function LoginScreen() {
   const [emailError, setEmailError] = useState<string | null>(null);
 
   const noToken = status === 'unauthenticated';
+  // DEBUGPopup chỉ active khi màn login đang được nhìn (quay lại app sau One-Tap
+  // → login screen focus lại → popup hiện). Không có event nào → không hiện.
+  const loginFocused = useIsFocused();
   // Google Sign-In đã được build vào APK chưa? (EXPO_PUBLIC_* inline lúc build).
   // Chỉ hiện notice "chưa có Google client ID" khi THẬT SỰ thiếu client ID — tránh
   // cảnh báo sai trong build đã nạp sẵn EXPO_PUBLIC_GOOGLE_CLIENT_ID (qua CI secret).
@@ -93,6 +98,10 @@ export default function LoginScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      {/* DEBUG TẠM THỜI — sự kiện Google login (One-Tap/BE). Hiện khi quay về
+          màn login. Bấm "Xóa & Đóng" để tắt. Xóa cùng services/googleDebug.ts. */}
+      <DebugPopup active={loginFocused} />
     </SafeAreaView>
   );
 }
