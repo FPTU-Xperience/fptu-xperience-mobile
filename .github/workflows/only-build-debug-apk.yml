@@ -92,6 +92,36 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
+      - name: Verify client ID actually inlined into the APK
+        run: |
+          # Bước Verify bên trên chỉ chứng minh secret CÓ TRONG MÔI TRƯỜNG CI.
+          # Bước này chứng minh client ID ĐÃ BỊ INLINE VÀO JS bundle trong APK
+          # (bằng chứng vật lý). Nếu fail → EXPO_PUBLIC_* không được nhúng
+          # (đúng dev-client, hoặc bundler không inherit env CI).
+          python3 - <<'PYEOF'
+          import os, sys, zipfile
+          apk = "app-debug.apk"
+          cid = os.environ.get("EXPO_PUBLIC_GOOGLE_CLIENT_ID", "").strip()
+          if not cid:
+            print("SKIP: EXPO_PUBLIC_GOOGLE_CLIENT_ID empty in env")
+            sys.exit(0)
+          with zipfile.ZipFile(apk) as z:
+            bundles = [n for n in z.namelist() if n.endswith(".bundle")]
+            if not bundles:
+              print("::error::No JS bundle found in APK — build này là dev-client (JS không nhúng).")
+              print("Bundle candidates:", [n for n in z.namelist() if "assets" in n][:20])
+              sys.exit(1)
+          for name in bundles:
+            with zipfile.ZipFile(apk) as z:
+              data = z.read(name)
+            print(f"Bundle: {name} ({len(data)} bytes)")
+            if cid.encode() in data:
+              print(f"OK: EXPO_PUBLIC_GOOGLE_CLIENT_ID (length={len(cid)}) đã được inline vào bundle.")
+              sys.exit(0)
+          print(f"::error::Client ID KHÔNG có trong JS bundle của {apk} — inlining EXPO_PUBLIC_* thất bại (dev-client hoặc env CI không đến bundler).")
+          sys.exit(1)
+          PYEOF
+
       - name: Upload APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
