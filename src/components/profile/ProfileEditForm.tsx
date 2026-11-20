@@ -11,14 +11,14 @@
 // Gate `editableFields`: field nào KHÔNG có trong danh sách → disabled + nhãn
 // "Chỉ đọc" (server vẫn enforce whitelist — đây chỉ là UX chặn sớm).
 //
-// Flow (đúng web): draft in-memory → "Xem trước" validate client → "Lưu thay đổi"
-// → patchSelfProfile (409 STALE_PROFILE → retry 1 lần bên trong) → thành công
-// gọi onSaved (route gọi lại fetch profile + dismiss); lỗi → hiện error, GIỮ draft.
+// Flow: draft in-memory → "Lưu thay đổi" → patchSelfProfile (409 STALE_PROFILE →
+// retry 1 lần bên trong) → thành công gọi onSaved (route gọi lại fetch profile +
+// dismiss); lỗi → hiện error, GIỮ draft. (Mobile không có bước "Xem trước"
+// staging như web — nút Lưu validate client rồi gửi PATCH ngay.)
 
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,7 +26,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Check, Eye, Lock } from 'lucide-react-native';
+import { Check, Lock } from 'lucide-react-native';
 
 import { MAJORS, patchSelfProfile, type SelfProfilePatch } from '@/services/profile';
 import type { SelfProfileResponse } from '@/types/api';
@@ -263,22 +263,6 @@ export default function ProfileEditForm({ profile, campus, onSaved, onClose }: P
     };
   };
 
-  const preview = () => {
-    try {
-      const patch = buildPatch();
-      const fieldCount =
-        Object.keys(patch.profile ?? {}).length +
-        Object.keys(patch.personal ?? {}).length +
-        Object.keys(patch.academic ?? {}).length;
-      Alert.alert(
-        'Xem trước',
-        `Thay đổi ${fieldCount} trường. Nhấn "Lưu thay đổi" để gửi tới máy chủ.`,
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Dữ liệu không hợp lệ.');
-    }
-  };
-
   const save = async () => {
     if (saving || !changed) return;
     let patch: SelfProfilePatch;
@@ -495,10 +479,9 @@ export default function ProfileEditForm({ profile, campus, onSaved, onClose }: P
         ) : null}
       </ScrollView>
 
-      {/* Footer: Hủy / Xem trước / Lưu */}
+      {/* Footer: Hủy / Lưu */}
       <View style={styles.footer}>
         <PressableRow label="Hủy" onPress={onClose} disabled={saving} variant="outline" />
-        <PressableRow label="Xem trước" onPress={preview} disabled={!changed || saving} variant="outline" icon={Eye} />
         <PressableRow
           label={saving ? 'Đang lưu…' : 'Lưu thay đổi'}
           onPress={save}
@@ -571,7 +554,7 @@ type PressableRowProps = {
   onPress: () => void;
   disabled?: boolean;
   variant: 'outline' | 'primary';
-  icon?: typeof Eye | typeof Check;
+  icon?: typeof Check;
 };
 
 function PressableRow({ label, onPress, disabled = false, variant, icon: Icon }: PressableRowProps) {

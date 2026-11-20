@@ -1,7 +1,7 @@
 // app/event/[id].tsx
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Briefcase, Users } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
+  import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 
 import AssignmentTab from '@/components/event-detail/AssignmentTab';
@@ -21,6 +21,7 @@ import {
   fetchActivityResources,
   fetchMyAttendance,
   registerForActivity,
+  cancelRegistration,
 } from '@/services/activities';
 import type {
   ActivityDetail,
@@ -43,8 +44,9 @@ export default function EventDetailScreen() {
 
   const [tab, setTab] = useState<DetailTabKey>('overview');
   const [bookmarked, setBookmarked] = useState(false);
-  const [registered, setRegistered] = useState(false);
+  const [registeredOverride, setRegisteredOverride] = useState<boolean | null>(null);
   const [registering, setRegistering] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   // Tổng quan + tài nguyên + điểm danh: 3 request song song, lỗi cục bộ
   // (vd resources bị 403) không làm hỏng cả trang.
@@ -64,6 +66,9 @@ export default function EventDetailScreen() {
   );
 
   const detail: ActivityDetail | null = data;
+  // null = chưa có thao tác cục bộ; dùng trạng thái authoritative từ detail API.
+  // Sau register/cancel, override ngay để UI phản hồi tức thì.
+  const registered = registeredOverride ?? detail?.isRegistered ?? false;
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
@@ -76,11 +81,14 @@ export default function EventDetailScreen() {
   };
 
   const handleRegister = async () => {
-    if (!detail || registering || registered) return;
+    if (!detail || registering || cancelling || registered) return;
     setRegistering(true);
     try {
       const result = await registerForActivity(detail.id);
-      setRegistered(result.success);
+      if (result.success) {
+        setRegisteredOverride(true);
+        retry();
+      }
       Alert.alert(result.success ? 'Đăng ký thành công' : 'Đăng ký thất bại', result.message);
     } catch (err) {
       Alert.alert('Đăng ký thất bại', getApiErrorMessage(err));
@@ -89,12 +97,46 @@ export default function EventDetailScreen() {
     }
   };
 
+  const handleCancel = async () => {
+    if (!detail || cancelling || registering || !detail.registrationVersion) return;
+    setCancelling(true);
+    try {
+      const result = await cancelRegistration(detail.id, detail.registrationVersion);
+      if (result.success) setRegisteredOverride(false);
+      Alert.alert(result.success ? 'Đã hủy đăng ký' : 'Hủy đăng ký thất bại', result.message);
+      if (result.success) retry();
+    } catch (err) {
+      Alert.alert('Hủy đăng ký thất bại', getApiErrorMessage(err));
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const requestCancelConfirmation = () => {
+    if (!detail || !registered || !detail.canCancelRegistration || cancelling || registering) return;
+    Alert.alert(
+      'Xác nhận hủy đăng ký',
+      `Bạn muốn hủy đăng ký tham gia ${detail.title}? Chỉ hủy được trước giờ bắt đầu và khi chưa có dữ liệu điểm danh.`,
+      [
+        { text: 'Giữ đăng ký', style: 'cancel' },
+        { text: 'Xác nhận hủy đăng ký', style: 'destructive', onPress: () => void handleCancel() },
+      ],
+    );
+  };
+
   const reload = useCallback(() => retry(), [retry]);
+  const canCancel =
+    registered &&
+    detail?.canCancelRegistration === true &&
+    typeof detail.registrationVersion === 'string' &&
+    /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(detail.registrationVersion);
 
   const registerState: RegisterState = {
     registered,
     loading: registering,
     disabled: detail?.status === 'ended',
+    cancelling,
+    canCancel,
   };
 
   return (
@@ -154,7 +196,7 @@ export default function EventDetailScreen() {
             )}
           </ScrollView>
 
-          <BottomActionBar register={registerState} onRegister={handleRegister} />
+          <BottomActionBar register={registerState} onRegister={handleRegister} onCancel={requestCancelConfirmation} />
         </>
       )}
     </View>

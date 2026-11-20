@@ -8,12 +8,18 @@ import type { RegisterState } from '@/types/activityDetail';
 type Props = {
   register: RegisterState;
   onRegister: () => void;
+  onCancel: () => void;
   onPressChat?: () => void;
 };
 
-export default function BottomActionBar({ register, onRegister, onPressChat }: Props) {
+export default function BottomActionBar({ register, onRegister, onCancel, onPressChat }: Props) {
   const insets = useSafeAreaInsets();
-  const inactive = register.disabled || register.registered;
+  const registeredAndCannotCancel = register.registered && !register.canCancel;
+  const inactive = register.disabled || registeredAndCannotCancel;
+  const cancelling = register.registered && register.canCancel && register.cancelling;
+  const label = register.registered
+    ? register.canCancel ? 'Hủy đăng ký' : 'Đã đăng ký'
+    : 'Đăng ký tham gia ngay';
 
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
@@ -22,16 +28,18 @@ export default function BottomActionBar({ register, onRegister, onPressChat }: P
       </Pressable>
 
       <Pressable
-        style={[styles.button, inactive && styles.buttonOff]}
-        disabled={inactive || register.loading}
-        onPress={onRegister}>
-        {register.loading ? (
+        style={[
+          styles.button,
+          register.registered && register.canCancel && styles.cancelButton,
+          inactive && styles.buttonOff,
+        ]}
+        disabled={inactive || register.loading || cancelling}
+        onPress={register.registered && register.canCancel ? onCancel : onRegister}>
+        {register.loading || cancelling ? (
           <ActivityIndicator color="#fff" />
         ) : (
           <>
-            <Text style={styles.buttonText}>
-              {register.registered ? 'Đã đăng ký' : 'Đăng ký tham gia ngay'}
-            </Text>
+            <Text style={styles.buttonText}>{label}</Text>
             {!register.registered && <ArrowRight size={18} color="#fff" />}
           </>
         )}
@@ -71,6 +79,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: '#F97316',
   },
+  /** Nền riêng cho nút "Hủy đăng ký" — phân biệt với hành vi hủy. */
+  cancelButton: { backgroundColor: '#DC2626' },
   buttonOff: { backgroundColor: '#FDBA74' },
   buttonText: { color: '#fff', fontSize: 15, fontWeight: '800' },
 });

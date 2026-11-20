@@ -239,6 +239,9 @@ const API_ERROR_MESSAGES: Record<string, string> = {
   NOT_FOUND: 'Không tìm thấy dữ liệu.',
   // Activities / registration
   REGISTRATION_CLOSED: 'Đăng ký đã đóng cho hoạt động này.',
+  STALE_REGISTRATION: 'Đăng ký hoặc điều kiện hủy đã thay đổi. Vui lòng tải lại hoạt động rồi thử lại.',
+  CANCELLATION_CLOSED: 'Không thể hủy đăng ký: hoạt động đã bắt đầu hoặc đã có lượt điểm danh.',
+  INVALID_CANCELLATION: 'Yêu cầu hủy không hợp lệ. Vui lòng tải lại hoạt động rồi thử lại.',
   ACTIVITY_FULL: 'Hoạt động đã đầy đủ chỗ.',
   SELF_REGISTRATION_ONLY: 'Bạn chỉ có thể đăng ký cho chính mình.',
   REGISTRATION_REQUIRED: 'Bạn cần đăng ký trước khi điểm danh.',

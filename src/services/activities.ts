@@ -14,6 +14,8 @@
 // để component không phải đổi. Phần field API không trả (màu banner, icon…)
 // được sinh deterministic trong `uiDerive.ts`.
 
+import { randomUUID } from 'expo-crypto';
+
 import { apiFetch, toQuery } from '@/services/apiClient';
 import {
   decorFor,
@@ -175,6 +177,11 @@ export async function fetchActivityDetail(id: string): Promise<ActivityDetail | 
     },
     documents: [],
     media: [],
+    // Trạng thái đăng ký hiện tại của user (endpoint detail trả sẵn theo
+    // actor) — để màn chi tiết mở lại ở đúng trạng thái "đã đăng ký".
+    isRegistered: item.isRegistered === true,
+    registrationVersion: item.registrationVersion ?? null,
+    canCancelRegistration: item.canCancelRegistration === true,
   };
 }
 
@@ -252,7 +259,14 @@ export async function registerForActivity(
   // hiển thị đúng thông điệp qua getApiErrorMessage.
   const result = await apiFetch<ParticipantResult>(
     `/api/activities/${activityId}/participants`,
-    { method: 'POST', body: {} },
+    {
+      method: 'POST',
+      body: {},
+      // BE bắt buộc Idempotency-Key cho thao tác ghi (ApiOperationReceipt) —
+      // thiếu → 400 IDEMPOTENCY_KEY_REQUIRED ("Provide Idempotency-Key.").
+      // UUID mới mỗi lần gọi, đồng bộ pattern với profile-media.ts / profile.ts.
+      headers: { 'Idempotency-Key': randomUUID() },
+    },
   );
   return {
     success: result.success !== false,
@@ -263,18 +277,32 @@ export async function registerForActivity(
   };
 }
 
-/** POST /api/activities/{id}/registration/cancel */
+/**
+ * POST /api/activities/{id}/registration/cancel
+ *
+ * BE yêu cầu body CHỨA ĐÚNG 1 property `expectedVersion` (GUID string) —
+ * phiên bản đăng ký hiện tại, nhận từ `StudentActivityItem.registrationVersion`.
+ * Thiếu / sai / kèm property khác → 400 INVALID_CANCELLATION.
+ */
 export async function cancelRegistration(
   id: string,
+  expectedVersion: string | null,
 ): Promise<{ success: boolean; message: string }> {
   const activityId = Number(id);
   if (!Number.isFinite(activityId)) {
     return { success: false, message: 'Hoạt động không hợp lệ.' };
   }
+  if (typeof expectedVersion !== 'string' || expectedVersion.trim() === '') {
+    return { success: false, message: 'Thiếu phiên bản đăng ký để hủy. Vui lòng tải lại hoạt động.' };
+  }
 
   const result = await apiFetch<ParticipantResult>(
     `/api/activities/${activityId}/registration/cancel`,
-    { method: 'POST', body: {} },
+    {
+      method: 'POST',
+      body: { expectedVersion },
+      headers: { 'Idempotency-Key': randomUUID() },
+    },
   );
   return {
     success: result.success !== false,

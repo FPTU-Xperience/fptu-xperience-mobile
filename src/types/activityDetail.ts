@@ -79,10 +79,20 @@ export interface ActivityDetail {
   attendance: AttendanceInfo;
   documents: DocumentItem[];
   media: MediaItem[];
+  /** Người dùng đã đăng ký (từ API — đọc khi mở màn, không chỉ local state). */
+  isRegistered: boolean;
+  /** GUID phiên bản đăng ký — bắt buộc gởi lại khi hủy (expectedVersion). */
+  registrationVersion: string | null;
+  /** BE cho phép hủy (chưa bắt đầu, chưa có attendance, còn scheduled). */
+  canCancelRegistration: boolean;
 }
 
 export interface RegisterState {
   registered: boolean;
   loading: boolean;
   disabled: boolean;
+  /** Đang gọi API hủy đăng ký. */
+  cancelling: boolean;
+  /** Được phép hủy: canCancelRegistration + có registrationVersion (GUID). */
+  canCancel: boolean;
 }
