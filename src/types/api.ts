@@ -251,6 +251,44 @@ export interface StudentActivityPage {
   scopeVersion: string;
 }
 
+/**
+ * Row trong GET /api/users/me/activity-history — phiên/điểm danh/tham gia của tôi.
+ * (Trùng shape với web: fptu-xperience-clubhub-ui `loadStudentActivitySchedule`.)
+ */
+export interface UserActivityHistoryItem {
+  activityId: number;
+  title: string;
+  clubId: number;
+  clubName: string;
+  activityStatus: string;
+  sessionId: number | null;
+  sessionStatus: string | null;
+  semesterId: string | null;
+  startTime: string; // ISO UTC
+  endTime: string; // ISO UTC
+  location: string;
+  sourceNamespace: string;
+  isLegacy: boolean;
+  isAuthoritative: boolean;
+  attendanceId: number | null;
+  attendanceDate: string | null;
+  attendanceStatus: string;
+  verificationStatus: string;
+  recognitionStatus: string;
+  contributionId: number | null;
+  checkedInAt: string | null;
+}
+
+/** GET /api/users/me/activity-history?page=&pageSize= */
+export interface UserActivityHistoryPage {
+  items: UserActivityHistoryItem[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  asOf: string;
+}
+
 export interface FetchActivitiesParams {
   clubId?: number | null;
   search?: string | null;

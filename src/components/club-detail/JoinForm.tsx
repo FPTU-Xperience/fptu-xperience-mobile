@@ -82,10 +82,11 @@ export default function JoinForm({
   const validate = (): boolean => {
     const next: Errors = {};
 
-    const digits = phone.replace(/\D/g, '');
+    const normalizedPhone = phone.trim().replace(/[^0-9+]/g, '');
+    const digits = normalizedPhone.replace(/\D/g, '');
     if (!digits) next.phone = 'Vui lòng nhập số điện thoại.';
-    else if (digits.length < 9 || digits.length > 15) {
-      next.phone = 'Số điện thoại phải có 9-15 chữ số.';
+    else if (!/^\+?[0-9]{9,15}$/.test(normalizedPhone)) {
+      next.phone = 'Số điện thoại chỉ được gồm dấu + và 9-15 chữ số.';
     }
 
     if (!reason.trim()) next.reason = 'Vui lòng nêu lý do muốn gia nhập.';
@@ -110,7 +111,18 @@ export default function JoinForm({
       const result = await joinClub(clubId, {
         fullName: user?.name ?? '',
         email: user?.email ?? '',
-        phoneNumber: phone.trim(),
+        // Gửi giá trị đã normalize (loại khoảng trắng/dấu gạch) để khớp regex
+        // phía BE `^\+?[0-9]{9,15}$` — cùng chuẩn với validate() ở trên.
+        phoneNumber: phone.trim().replace(/[^0-9+]/g, ''),
+        dateOfBirth: null,
+        gender: '',
+        address: null,
+        hobbies: null,
+        skills: null,
+        expectations: null,
+        contributions: null,
+        additionalInfo: null,
+        message: null,
         reason: reason.trim(),
         acceptedClubRules: acceptedRules,
         committedToParticipate: committed,

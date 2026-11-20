@@ -310,8 +310,11 @@ export function describeApiError(
     const message = API_ERROR_MESSAGES[code.toUpperCase()];
     if (message) return message;
   }
-  if (status >= 400 && status < 600 && HTTP_STATUS_MESSAGES[status]) return HTTP_STATUS_MESSAGES[status];
+  // Ưu tiên lý do cụ thể từ server (vd "The phone number must contain 9 to 15
+  // digits.") trước khi rơi về thông báo chung của mã HTTP — để mobile hiện
+  // đúng nguyên nhân, đồng nhất với web (web đọc `message` body trước status).
   if (serverMessage) return serverMessage;
+  if (status >= 400 && status < 600 && HTTP_STATUS_MESSAGES[status]) return HTTP_STATUS_MESSAGES[status];
   return 'Có lỗi không xác định. Vui lòng thử lại sau.';
 }
 
