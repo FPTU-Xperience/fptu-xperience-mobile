@@ -26,6 +26,7 @@ function RootNavigator() {
       {/* Chỉ truy cập được khi đã đăng nhập */}
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="profile/edit" />
         <Stack.Screen name="event/[id]" />
         <Stack.Screen name="club/[id]" />
       </Stack.Protected>

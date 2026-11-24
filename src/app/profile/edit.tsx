@@ -1,18 +1,14 @@
-// app/(tabs)/profile/edit.tsx
+// app/profile/edit.tsx
 //
-// Màn chỉnh sửa hồ sơ (Phase 4) — route lồng của tab profile.
+// Màn chỉnh sửa hồ sơ (Phase 4) — route protected ở root Stack.
 //
-// Expo Router: file `(tabs)/profile.tsx` + `(tabs)/profile/edit.tsx` song song
-// HỢP LỆ (conflict chỉ xảy ra nếu tồn tại `(tabs)/profile/index.tsx` — hiện không
-// có). Route thừa hưởng auth guard từ `<Stack.Screen name="(tabs)"/>` trong
-// root `_layout.tsx` (chỉ truy cập được khi đã đăng nhập) ⇒ không cần khai báo
-// thêm ở root. Push lên cùng navigator Tabs như my-clubs (tab bar vẫn hiện, tab
-// profile tô sáng).
+// Đặt ngoài `(tabs)` để tránh xung đột Expo Router giữa file
+// `(tabs)/profile.tsx` và thư mục `(tabs)/profile/`. Root route vẫn thừa hưởng
+// auth guard từ `<Stack.Protected guard={isAuthenticated}>`.
 //
 // Flow: fetch GET /api/users/me/profile (source của form + version + editableFields)
 //   → ProfileEditForm (3 tab) → "Lưu" → patchSelfProfile → thành công: retry feed
-//     của màn profile (thông qua parent re-render) + quay về; lỗi: giữ draft, hiện
-//     error trong form.
+//     của màn profile + quay về; lỗi: giữ draft, hiện error trong form.
 
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
@@ -29,7 +25,7 @@ export default function ProfileEditScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const goBack = () => router.navigate('/profile');
+  const goBack = () => router.replace('/(tabs)/profile');
 
   // fetchSelfProfile "nín" lỗi (trả null) — route cần có trạng thái lỗi thật
   // để hiện ErrorState + retry, không thì spinner vô hạn khi BE lỗi.

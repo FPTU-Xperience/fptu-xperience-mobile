@@ -24,11 +24,8 @@ const TABS: Record<string, TabConfig> = {
     'my-clubs': { icon: NotepadText, label: 'Đơn của tôi' },
 };
 
-// Route phụ (không hiện trên bar) -> tab cha sẽ được tô sáng khi đang ở route phụ đó
-const PARENT_TAB: Record<string, string> = {
-    // Route lồng của tab profile (màn chỉnh sửa hồ sơ) — screen name "profile/edit"
-    'profile/edit': 'profile',
-};
+// All tab routes are top-level entries in the Tabs navigator. The profile edit
+// screen is a root Stack route, so it is intentionally not mapped here.
 
 // Type tối thiểu, khớp với props mà tabBar thực sự nhận
 type AppTabBarProps = {
@@ -53,9 +50,7 @@ export default function AppTabBar({
     navigateToTab,
     insets,
 }: AppTabBarProps) {
-    // Tên tab cần tô sáng: nếu đang ở route phụ thì lấy tab cha
     const currentName = state.routes[state.index]?.name;
-    const activeName = PARENT_TAB[currentName] ?? currentName;
 
     return (
         <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 8) }]}>
@@ -63,7 +58,7 @@ export default function AppTabBar({
                 const config = TABS[route.name];
                 if (!config) return null;
 
-                const focused = route.name === activeName;
+                const focused = route.name === currentName;
                 const isCurrentRoute = state.index === index;
                 const Icon = config.icon;
 
