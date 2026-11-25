@@ -51,6 +51,9 @@ function toScheduleEvent(item: StudentActivityItem): ScheduleEvent {
     // Đã đăng ký → vé đã xác nhận; chưa đăng ký → chờ check-in.
     status: item.isRegistered ? 'confirmed' : 'pending',
     action: item.isRegistered ? 'qr' : 'ticket',
+    isRegistered: item.isRegistered,
+    registrationVersion: item.registrationVersion ?? null,
+    canCancelRegistration: item.canCancelRegistration,
   };
 }
 
@@ -93,6 +96,9 @@ function toAttendedEvent(row: UserActivityHistoryItem): ScheduleEvent {
     venue: row.location || '',
     status: 'attended',
     action: 'qr',
+    isRegistered: true,
+    registrationVersion: null,
+    canCancelRegistration: false,
   };
 }
 

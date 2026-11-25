@@ -1,8 +1,9 @@
 // app/(tabs)/activity.tsx
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -19,8 +20,14 @@ import ScreenHeader from '@/components/common/ScreenHeader';
 import SearchBar from '@/components/common/SearchBar';
 import { useInfiniteList } from '@/hooks/useInfiniteList';
 import { getApiErrorMessage } from '@/services/apiClient';
-import { fetchActivities } from '@/services/activities';
+import {
+  cancelRegistration,
+  fetchActivities,
+  registerForActivity,
+} from '@/services/activities';
+import { fetchSchedule } from '@/services/schedule';
 import type { ActivityEvent, ActivityFeed, FilterKey } from '@/types/activity';
+import type { ScheduleEvent } from '@/types/schedule';
 
 const PAGE_SIZE = 6;
 
@@ -28,6 +35,8 @@ export default function ActivityScreen() {
   const router = useRouter();
   const [keyword, setKeyword] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
+  const [registrationLoadingId, setRegistrationLoadingId] = useState<string | null>(null);
+  const [registrationOverrides, setRegistrationOverrides] = useState<Record<string, Partial<Pick<ActivityEvent, 'isRegistered' | 'registrationVersion' | 'canCancelRegistration'>>>>({});
 
   // Debounce từ khoá 250ms.
   const [debouncedKeyword, setDebouncedKeyword] = useState('');
@@ -35,6 +44,8 @@ export default function ActivityScreen() {
     const timer = setTimeout(() => setDebouncedKeyword(keyword), 250);
     return () => clearTimeout(timer);
   }, [keyword]);
+
+  const [scheduleMap, setScheduleMap] = useState<Record<string, Pick<ScheduleEvent, 'isRegistered' | 'registrationVersion' | 'canCancelRegistration'>>>({});
 
   const {
     items: events,
@@ -67,8 +78,87 @@ export default function ActivityScreen() {
     { keyOf: (e) => e.id, getErrorMessage: getApiErrorMessage },
   );
 
+  const loadRegistrationStatus = async () => {
+    try {
+      const schedule = await fetchSchedule({ limit: 100 });
+      const next: Record<string, Pick<ScheduleEvent, 'isRegistered' | 'registrationVersion' | 'canCancelRegistration'>> = {};
+      for (const event of [...schedule.upcomingThisWeek, ...schedule.live]) {
+        next[event.id] = {
+          isRegistered: event.isRegistered,
+          registrationVersion: event.registrationVersion,
+          canCancelRegistration: event.canCancelRegistration,
+        };
+      }
+      setScheduleMap(next);
+    } catch {
+      // Activity feed vẫn hiển thị được nếu schedule endpoint lỗi.
+    }
+  };
+
+  useEffect(() => {
+    const task = Promise.resolve().then(() => loadRegistrationStatus());
+    return () => {
+      void task;
+    };
+  }, [debouncedKeyword, filter]);
+
+  const displayedEvents = useMemo(
+    () => events.map((event) => ({
+      ...event,
+      ...(scheduleMap[event.id] ?? {}),
+      ...(registrationOverrides[event.id] ?? {}),
+    })),
+    [events, registrationOverrides, scheduleMap],
+  );
+
   const openDetail = (event: ActivityEvent) => {
     router.push({ pathname: '/event/[id]', params: { id: event.id } });
+  };
+
+  const handleRegistration = (event: ActivityEvent) => {
+    if (registrationLoadingId) return;
+    if (event.isRegistered) {
+      if (!event.canCancelRegistration || !event.registrationVersion) return;
+      Alert.alert('Xác nhận hủy đăng ký', `Bạn muốn hủy đăng ký ${event.title}?`, [
+        { text: 'Giữ đăng ký', style: 'cancel' },
+        { text: 'Hủy đăng ký', style: 'destructive', onPress: () => void cancel(event) },
+      ]);
+      return;
+    }
+    void register(event);
+  };
+
+  const register = async (event: ActivityEvent) => {
+    setRegistrationLoadingId(event.id);
+    try {
+      const result = await registerForActivity(event.id);
+      if (result.success) await loadRegistrationStatus();
+      Alert.alert(result.success ? 'Đăng ký thành công' : 'Đăng ký thất bại', result.message);
+    } catch (err) {
+      Alert.alert('Đăng ký thất bại', getApiErrorMessage(err));
+    } finally {
+      setRegistrationLoadingId(null);
+    }
+  };
+
+  const cancel = async (event: ActivityEvent) => {
+    if (!event.registrationVersion) return;
+    setRegistrationLoadingId(event.id);
+    try {
+      const result = await cancelRegistration(event.id, event.registrationVersion);
+      if (result.success) {
+        setRegistrationOverrides((current) => ({
+          ...current,
+          [event.id]: { isRegistered: false, registrationVersion: null, canCancelRegistration: false },
+        }));
+        await loadRegistrationStatus();
+      }
+      Alert.alert(result.success ? 'Đã hủy đăng ký' : 'Hủy đăng ký thất bại', result.message);
+    } catch (err) {
+      Alert.alert('Hủy đăng ký thất bại', getApiErrorMessage(err));
+    } finally {
+      setRegistrationLoadingId(null);
+    }
   };
 
   // Truyền dạng element (không phải component) để ô tìm kiếm không bị mất focus khi gõ
@@ -104,12 +194,17 @@ export default function ActivityScreen() {
   return (
     <ListScreenLayout title="Hoạt động">
       <FlatList
-        data={events}
-        extraData={loading}
+        data={displayedEvents}
+        extraData={`${loading}-${registrationLoadingId}-${scheduleMap}`}
         keyExtractor={(e) => e.id}
         renderItem={({ item }) => (
           <View style={[styles.item, loading && styles.dim]}>
-            <EventCard event={item} onPressDetail={openDetail} />
+            <EventCard
+              event={item}
+              onPressDetail={openDetail}
+              onRegistration={handleRegistration}
+              registrationLoading={registrationLoadingId === item.id}
+            />
           </View>
         )}
         ItemSeparatorComponent={Separator}
@@ -120,7 +215,7 @@ export default function ActivityScreen() {
             loadingMore={loadingMore}
             moreError={moreError}
             hasMore={hasMore}
-            hasItems={events.length > 0}
+            hasItems={displayedEvents.length > 0}
             onRetry={retryMore}
           />
         }

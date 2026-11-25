@@ -23,6 +23,9 @@ export interface ActivityEvent {
   time: string;
   venue: { kind: VenueKind; label: string };
   footer: { kind: FooterKind; label: string };
+  isRegistered: boolean;
+  registrationVersion: string | null;
+  canCancelRegistration: boolean;
 }
 
 export interface ActivityFilter {

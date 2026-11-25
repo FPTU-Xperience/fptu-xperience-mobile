@@ -17,6 +17,10 @@ export interface ScheduleEvent {
   venue: string;
   status: TicketStatus;
   action: TicketAction;
+  /** Trạng thái đăng ký từ API lịch trình của người dùng. */
+  isRegistered: boolean;
+  registrationVersion: string | null;
+  canCancelRegistration: boolean;
 }
 
 export interface ScheduleFeed {

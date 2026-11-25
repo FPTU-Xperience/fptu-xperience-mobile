@@ -88,6 +88,9 @@ function toActivityEvent(item: StudentActivityItem): ActivityEvent {
       kind: 'attendees',
       label: item.isRegistered ? 'Bạn đã đăng ký' : 'Mở đăng ký',
     },
+    isRegistered: item.isRegistered,
+    registrationVersion: item.registrationVersion ?? null,
+    canCancelRegistration: item.canCancelRegistration,
   };
 }
 

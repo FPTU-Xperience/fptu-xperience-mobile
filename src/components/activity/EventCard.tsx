@@ -10,7 +10,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react-native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 import type { ActivityEvent, ActivityStatus, VenueKind } from '@/types/activity';
@@ -36,6 +36,8 @@ const VENUE_ICON: Record<VenueKind, LucideIcon> = {
 type Props = {
   event: ActivityEvent;
   onPressDetail?: (event: ActivityEvent) => void;
+  onRegistration?: (event: ActivityEvent) => void;
+  registrationLoading?: boolean;
 };
 
 function Footer({ event, theme }: { event: ActivityEvent; theme: ReturnType<typeof useTheme> }) {
@@ -62,7 +64,12 @@ function Footer({ event, theme }: { event: ActivityEvent; theme: ReturnType<type
   );
 }
 
-export default function EventCard({ event, onPressDetail }: Props) {
+export default function EventCard({
+  event,
+  onPressDetail,
+  onRegistration,
+  registrationLoading = false,
+}: Props) {
   const VenueIcon = VENUE_ICON[event.venue.kind];
 
   return (
@@ -122,11 +129,29 @@ export default function EventCard({ event, onPressDetail }: Props) {
 
       {/* Footer */}
       <View style={styles.footer}>
-        {/* <Footer event={event} theme={theme} /> */}
         <Pressable style={styles.detail} onPress={() => onPressDetail?.(event)}>
           <Text style={styles.detailText}>Xem chi tiết</Text>
           <ArrowUpRight size={14} color="#F97316" />
         </Pressable>
+        {onRegistration ? (
+          <Pressable
+            style={[
+              styles.registration,
+              event.isRegistered && styles.registrationCancel,
+              registrationLoading && styles.registrationDisabled,
+            ]}
+            onPress={() => onRegistration(event)}
+            disabled={registrationLoading || (event.isRegistered && !event.canCancelRegistration)}>
+            {registrationLoading ? <ActivityIndicator size="small" color="#fff" /> : null}
+            <Text style={styles.registrationText}>
+              {event.isRegistered
+                ? event.canCancelRegistration
+                  ? 'Hủy đăng ký'
+                  : 'Đã đăng ký'
+                : 'Tham gia ngay'}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -215,4 +240,18 @@ const styles = StyleSheet.create({
   miniOverlap: { marginLeft: -8 },
   detail: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   detailText: { fontSize: 12, fontWeight: '700', color: '#F97316' },
+  registration: {
+    minWidth: 118,
+    minHeight: 34,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#F97316',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  registrationCancel: { backgroundColor: '#DC2626' },
+  registrationDisabled: { opacity: 0.6 },
+  registrationText: { color: '#fff', fontSize: 11, fontWeight: '800' },
 });
