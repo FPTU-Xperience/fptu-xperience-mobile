@@ -62,4 +62,8 @@ export interface ApplyState {
   loading: boolean;
   /** true khi CLB chưa mở tuyển */
   disabled: boolean;
+  /** true khi user đã có đơn chờ duyệt (không cho nộp lại) */
+  pending: boolean;
+  /** true khi user đã là thành viên được duyệt */
+  member: boolean;
 }

@@ -47,8 +47,12 @@ function classify(status: string): { tab: ApplicationTabKey; result: Application
  * GET /api/clubs/me/memberships
  * @param campus campus hiện tại (để dựng `hubLabel`)
  */
+export async function fetchMyClubMemberships(): Promise<ClubMembershipResponse[]> {
+  return apiFetch<ClubMembershipResponse[]>('/api/clubs/me/memberships');
+}
+
 export async function fetchMyClubs(campus = ''): Promise<MyClubsFeed> {
-  const memberships = await apiFetch<ClubMembershipResponse[]>('/api/clubs/me/memberships');
+  const memberships = await fetchMyClubMemberships();
 
   const clubs: MyClub[] = [];
   const applications: Application[] = [];

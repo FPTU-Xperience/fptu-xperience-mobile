@@ -13,13 +13,15 @@ type Props = {
 
 export default function ClubActionBar({ apply, onApply, onPressChat }: Props) {
   const insets = useSafeAreaInsets();
-  const inactive = apply.disabled || apply.applied;
+  const inactive = apply.disabled || apply.applied || apply.pending || apply.member;
 
-  const label = apply.applied
-    ? 'Đã nộp hồ sơ'
-    : apply.disabled
-      ? 'Chưa mở tuyển thành viên'
-      : 'Nộp hồ sơ gia nhập';
+  const label = apply.member
+    ? 'Đã là thành viên'
+    : apply.pending || apply.applied
+      ? 'Đã gửi đơn'
+      : apply.disabled
+        ? 'Chưa mở tuyển thành viên'
+        : 'Nộp hồ sơ gia nhập';
 
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 12) }]}>

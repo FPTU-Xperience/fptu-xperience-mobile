@@ -1,6 +1,6 @@
 // app/club/[id].tsx
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -26,6 +26,7 @@ import ErrorState from '@/components/common/ErrorState';
 import { useApiState } from '@/hooks/useApiState';
 import { useAuth } from '@/providers/AuthProvider';
 import { fetchClubDetail } from '@/services/clubs';
+import { fetchMyClubMemberships } from '@/services/myClubs';
 import type { ApplyState } from '@/types/clubDetail';
 
 export default function ClubDetailScreen() {
@@ -37,11 +38,46 @@ export default function ClubDetailScreen() {
   const [bookmarked, setBookmarked] = useState(false);
   const [applied, setApplied] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
+  // Trạng thái membership của user ở CLB này. 'loading' = đang preflight (chặn
+  // mở form để tránh race tạo đơn trùng); 'error' = không xác định được → cho
+  // phép mở (rào cản cuối cùng là 409 phía server).
+  const [membership, setMembership] = useState<
+    'loading' | 'pending' | 'member' | 'none' | 'error'
+  >('loading');
 
   const { data: club, loading, error, hasError, retry } = useApiState(
     () => fetchClubDetail(clubId),
     [clubId],
   );
+
+  // Preflight: xác định user có đơn chờ (PENDING/INVITED) hay đã là thành viên
+  // (APPROVED) ở CLB này để CHẶN nộp đơn trùng trước khi mở form. Reset về
+  // 'loading' khi clubId đổi — ở render (pattern state-on-prop-change), không
+  // set đồng bộ trong effect (tránh cascading renders).
+  const [prevClubId, setPrevClubId] = useState(clubId);
+  if (prevClubId !== clubId) {
+    setPrevClubId(clubId);
+    setMembership('loading');
+  }
+  useEffect(() => {
+    let active = true;
+    fetchMyClubMemberships()
+      .then((memberships) => {
+        if (!active) return;
+        const match = (memberships ?? []).find((m) => String(m.clubId) === clubId);
+        const s = (match?.status ?? '').trim().toUpperCase();
+        if (s === 'PENDING' || s === 'INVITED') setMembership('pending');
+        else if (s === 'APPROVED') setMembership('member');
+        else setMembership('none');
+      })
+      .catch(() => {
+        if (!active) return;
+        setMembership('error');
+      });
+    return () => {
+      active = false;
+    };
+  }, [clubId]);
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
@@ -55,14 +91,17 @@ export default function ClubDetailScreen() {
 
   /** Mở form gia nhập (quyết định scope #1) thay vì nộp 1 chạm. */
   const handleApply = () => {
-    if (!club || applied) return;
+    if (!club || applied || membership !== 'none') return;
     setJoinOpen(true);
   };
 
   const applyState: ApplyState = {
     applied,
-    loading: false,
-    disabled: club ? !club.recruiting : false,
+    loading: membership === 'loading',
+    disabled:
+      (club ? !club.recruiting : false) || membership === 'loading' || membership === 'error',
+    pending: membership === 'pending' || applied,
+    member: membership === 'member',
   };
 
   return (
