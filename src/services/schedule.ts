@@ -49,9 +49,11 @@ function toScheduleEvent(item: StudentActivityItem): ScheduleEvent {
     time: `${hhmm(start)} - ${hhmm(end)}`,
     venue: item.location || '',
     // Đã đăng ký → vé đã xác nhận; chưa đăng ký → chờ check-in.
-    status: item.isRegistered ? 'confirmed' : 'pending',
-    action: item.isRegistered ? 'qr' : 'ticket',
-    isRegistered: item.isRegistered,
+    // `isRegistered` là cờ authoritative từ backend. `nextAction=CHECK_IN`
+    // cũng là tín hiệu tương thích cho các response cũ.
+    isRegistered: item.isRegistered === true || item.nextAction === 'CHECK_IN',
+    status: item.isRegistered || item.nextAction === 'CHECK_IN' ? 'confirmed' : 'pending',
+    action: item.isRegistered || item.nextAction === 'CHECK_IN' ? 'qr' : 'ticket',
     registrationVersion: item.registrationVersion ?? null,
     canCancelRegistration: item.canCancelRegistration,
   };
@@ -181,12 +183,21 @@ export async function fetchSchedule(params: {
 
   // API trả sắp theo giờ bắt đầu; bỏ qua item đã bắt đầu (khung giờ trôi qua).
   const now = Date.now();
+  const isRegistered = (item: StudentActivityItem) =>
+    item.isRegistered === true || item.nextAction === 'CHECK_IN';
+
+  // Đây là lịch trình cá nhân, nên chỉ hiển thị hoạt động user đã đăng ký.
+  // Feed UPCOMING/LIVE cũng trả các hoạt động khám phá chưa đăng ký; nếu đưa
+  // chúng vào đây sẽ làm UI gán nhãn sai "Chờ check-in".
   const upcomingThisWeek = (upcomingPage.items ?? [])
-    .filter((item) => new Date(item.startTime).getTime() > now)
+    .filter((item) => new Date(item.startTime).getTime() > now && isRegistered(item))
     .map(toScheduleEvent);
 
-  // LIVE: giữ nguyên thứ tự API trả (đang diễn ra). Trang đầu mới có.
-  const live = livePage ? (livePage.items ?? []).map(toLiveEvent) : [];
+  // LIVE: chỉ giữ các hoạt động user đã đăng ký; hoạt động chưa đăng ký thuộc
+  // tab Activity, không thuộc lịch trình cá nhân.
+  const live = livePage
+    ? (livePage.items ?? []).filter(isRegistered).map(toLiveEvent)
+    : [];
 
   const totalPages = upcomingPage.totalPages ?? 1;
 

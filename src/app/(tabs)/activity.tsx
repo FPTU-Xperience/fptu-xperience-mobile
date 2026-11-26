@@ -1,6 +1,6 @@
 // app/(tabs)/activity.tsx
-import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -78,11 +78,17 @@ export default function ActivityScreen() {
     { keyOf: (e) => e.id, getErrorMessage: getApiErrorMessage },
   );
 
-  const loadRegistrationStatus = async () => {
+  const loadRegistrationStatus = useCallback(async () => {
     try {
       const schedule = await fetchSchedule({ limit: 100 });
       const next: Record<string, Pick<ScheduleEvent, 'isRegistered' | 'registrationVersion' | 'canCancelRegistration'>> = {};
-      for (const event of [...schedule.upcomingThisWeek, ...schedule.live]) {
+      // Gộp cả 3 nguồn (sắp tới / đang diễn ra / đã tham gia) để hoạt động
+      // user đã tham gia + chờ check-in vẫn được đánh dấu "Đã đăng ký".
+      for (const event of [
+        ...schedule.upcomingThisWeek,
+        ...schedule.live,
+        ...schedule.attended,
+      ]) {
         next[event.id] = {
           isRegistered: event.isRegistered,
           registrationVersion: event.registrationVersion,
@@ -93,14 +99,29 @@ export default function ActivityScreen() {
     } catch {
       // Activity feed vẫn hiển thị được nếu schedule endpoint lỗi.
     }
-  };
+  }, []);
 
   useEffect(() => {
-    const task = Promise.resolve().then(() => loadRegistrationStatus());
+    const task = Promise.resolve().then(loadRegistrationStatus);
     return () => {
       void task;
     };
-  }, [debouncedKeyword, filter]);
+  }, [loadRegistrationStatus]);
+
+  // Tab Activity được giữ nguyên khi user chuyển tab → trạng thái đăng ký có
+  // thể bị cũ (vd đăng ký ở màn chi tiết rồi quay về). Khi tab nhận lại focus,
+  // đồng bộ lại trạng thái từ schedule API + làm mới danh sách. Bỏ qua lần focus
+  // đầu (effect ở trên đã fetch khi mount) — dùng ref đếm lần focus.
+  const focusCount = useRef(0);
+  useFocusEffect(
+    useCallback(() => {
+      focusCount.current += 1;
+      if (focusCount.current > 1) {
+        loadRegistrationStatus();
+        refresh();
+      }
+    }, [loadRegistrationStatus, refresh]),
+  );
 
   const displayedEvents = useMemo(
     () => events.map((event) => ({

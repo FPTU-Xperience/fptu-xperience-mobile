@@ -43,7 +43,6 @@ export default function EventDetailScreen() {
   const activityId = String(id ?? '');
 
   const [tab, setTab] = useState<DetailTabKey>('overview');
-  const [bookmarked, setBookmarked] = useState(false);
   const [registeredOverride, setRegisteredOverride] = useState<boolean | null>(null);
   const [registering, setRegistering] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -142,9 +141,7 @@ export default function EventDetailScreen() {
   return (
     <View style={styles.root}>
       <DetailTopBar
-        bookmarked={bookmarked}
         onBack={goBack}
-        onToggleBookmark={() => setBookmarked((v) => !v)}
         onShare={handleShare}
       />
 

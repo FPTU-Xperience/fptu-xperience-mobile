@@ -35,7 +35,6 @@ export default function ClubDetailScreen() {
   const clubId = String(id ?? '');
   const { user } = useAuth();
 
-  const [bookmarked, setBookmarked] = useState(false);
   const [applied, setApplied] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   // Trạng thái membership của user ở CLB này. 'loading' = đang preflight (chặn
@@ -108,9 +107,7 @@ export default function ClubDetailScreen() {
     <View style={styles.root}>
       <ClubTopBar
         campusLabel={club?.campusLabel ?? ''}
-        bookmarked={bookmarked}
         onBack={goBack}
-        onToggleBookmark={() => setBookmarked((v) => !v)}
         onShare={handleShare}
       />
 
